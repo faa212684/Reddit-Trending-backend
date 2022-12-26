@@ -1,0 +1,43 @@
+version: "3.7"
+services:
+    backend_prod:
+        build:
+            context: .
+            dockerfile: Dockerfile_prod
+        ports:
+            - "127.0.0.1:3000:3000"
+        environment:
+            NODE_ENV: "production"
+            LD_LIBRARY_PATH: "/opt/oracle/instantclient_19_10"
+            WALLET: "/app/oracle/wallet"
+        volumes:
+            - "/app/node_modules"
+        container_name: reddit_ts_backend_prod
+        image: reddit_ts_backend:prod
+        #networks:
+        #    default:
+        #        ipv4_address: 172.19.0.3
+        entrypoint: [ "npm", "run", "start:prod" ]
+    redis:
+        restart: always
+        container_name: reddit_redis2
+        image: redis:alpine
+        ports:
+            - "6381:6379"
+        #command: [ sh, -c, "rm -f /data/dump.rdb && redis-server" ]
+    nltk:
+        restart: always
+        build: ./nltk
+        expose:
+            - 5004
+        container_name: nltk_prod
+        command: pm2-runtime start main.py
+        image: nltk
+
+networks:
+    default:
+        name: composite_network
+        ipam:
+            driver: default
+            config:
+                - subnet: 172.19.0.0/16

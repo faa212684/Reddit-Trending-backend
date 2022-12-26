@@ -1,0 +1,13 @@
+version: "3.7"
+services:
+    worker:
+        restart: always
+        build:
+            context: .
+            dockerfile: Dockerfile_prod
+        volumes:
+            - ".:/app"
+            - "/app/node_modules"
+        image: worker:dev
+        command: npm run start
+        container_name: worker-prod

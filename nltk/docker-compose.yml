@@ -1,0 +1,17 @@
+version: '3.7'
+services:
+  nltk_dev:
+    build: .
+    expose:
+      - 5005
+    container_name: nltk_dev2
+    volumes:
+      - ".:/app"
+    #command: pm2 start main.py
+    command: nodemon --exec python3 main.py
+    image: nltk
+
+networks:
+  default:
+    name: composite_network
+    external: true

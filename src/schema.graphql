@@ -1,0 +1,71 @@
+scalar Object
+scalar JSON
+scalar Date
+
+type ForumObject {
+    forum: String
+    count: Int
+}
+
+type ThreadObject {
+    id: ID
+    title: String
+    forum: String
+    change: Int
+    MAX: Int
+    MIN: Int
+}
+
+type StateObject {
+    id: ID
+    title: String
+    forum: String
+    updated: Date
+    vote: Int
+    comment: Int
+}
+
+type ThreadDetail {
+    id: ID!
+    title: String!
+    forum: String!
+    created: Date!
+}
+
+type ThreadState {
+    id: String!
+    updated: Date
+    title:String
+    vote: Int
+    comment: Int
+    forum:String
+    change:Int
+    MAX: Int
+    MIN: Int
+}
+
+type GetCount {
+    thread: Int
+    threadState: Int
+    latest: String
+    forum: [JSON]
+}
+
+type GetThread {
+    all: [JSON]
+    one(id: ID!,limit: Int, forum: String, dateRange: Int, minVote: Int, minComment: Int): [ThreadState]
+}
+
+type GetState {
+    vote(limit: Int, forum: String, dateRange: Int, minVote: Int, minComment: Int): [ThreadState]
+    comment(limit: Int, forum: String, dateRange: Int, minVote: Int, minComment: Int): [ThreadState]
+    all(limit: Int, forum: String, dateRange: Int, minVote: Int, minComment: Int): [ThreadState]
+    distribution(limit: Int, forum: String, dateRange: Int, minVote: Int, minComment: Int): [JSON]
+}
+
+type Query {
+    hello:String
+    thread: GetThread
+    state: GetState
+    count: GetCount
+}

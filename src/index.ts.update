@@ -1,0 +1,15 @@
+import ThreadService from "./services/thread";
+import Log from "log4fns"
+import TagService from "./services/tagService"
+async function main(){
+    const tagService = new TagService()
+    const threadService = new ThreadService()
+    const result = await threadService.byPage({ page:0, pageSize :1000})
+    for(const r of result){
+        Log("update",r.id)
+        r.tags = await tagService.getTag(r.title,true)
+        await threadService.updateThread(r)
+        
+    }
+}
+main()

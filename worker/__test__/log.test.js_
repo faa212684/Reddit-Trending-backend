@@ -1,0 +1,34 @@
+const Log = require('log4fns');
+describe('Testing Log function', () => {
+    const log = console.log;
+    beforeEach(() => {
+        console.log = jest.fn();
+    });
+
+    afterEach(() => {
+        console.log = log;
+    });
+
+    describe('In test enviornment ', () => {
+        test('Should print out test contain "test" ', () => {
+            Log('test');
+            expect(console.log).toHaveBeenCalledWith(expect.stringContaining('test'));
+        });
+    });
+
+    describe('In development enviornment ', () => {
+        const oldEnv = process.env.NODE_ENV;
+        beforeEach(() => {
+            process.env.NODE_ENV = 'development';
+        });
+        afterEach(() => {
+            process.env.NODE_ENV = oldEnv;
+        });
+
+        test('Should print out test contain "test" and file name "test.js" ', () => {
+            Log('test');
+            expect(console.log).toHaveBeenCalledWith(expect.stringContaining('test.js'));
+            expect(console.log).toHaveBeenCalledWith(expect.stringContaining('test'));
+        });
+    });
+});

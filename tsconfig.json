@@ -1,0 +1,26 @@
+{
+    "compilerOptions": {
+        "outDir": "./dist",
+        "baseUrl": ".",
+        "esModuleInterop": true,
+        "module": "esnext",
+        "moduleResolution": "node",
+        "removeComments": true,
+        "resolveJsonModule": true,
+        "experimentalDecorators": true,
+        "target": "ES2015",
+        "emitDecoratorMetadata": true,
+        "lib": ["es2019", "dom"],
+        "paths": {
+            "@/*": ["src/*"]
+        },
+        "types": ["reflect-metadata", "node", "jest"],
+        "allowJs": true
+    },
+    "include": ["src/**/*", "__test__/**/*", "backup/thread_json.test.ts", "__test__/tagService.test.ts", "backup/threadService.test.ts", "backup/timeFormat.test.ts","__test__/cacheManager.test.tsts", "backup/redisCache.test.ts", "backup/threadJSONController.test.ts", "backup/cacheManager.test.ts"],
+    "exclude": ["node_modules", "**/node_modules/*", "**/*.spec.ts"],
+    "ts-node": {
+        "esm": true,
+        "experimentalSpecifierResolution": "node"
+    }
+}
