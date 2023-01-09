@@ -8,6 +8,7 @@ import Router from './route';
 import GraphqlServer from './services/graphqlServer';
 
 Log.setTimeZone('America/Vancouver');
+Log.setShowDetailInProduction(true)
 
 class App {
     @Inject(GraphqlServer)

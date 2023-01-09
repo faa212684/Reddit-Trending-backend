@@ -32,6 +32,11 @@ type Query = {
     symbol: string;
 };
 
+/**
+ * Extracts query parameters from a request object and returns them as an object.
+ * @param {any} req - The request object from which to extract the query parameters.
+ * @returns {QueryParams} An object containing the extracted query parameters.
+ */
 export function getQueryFromReq(req: any): QueryParams {
     const obj = req ? (req.query ? req.query : req) : {};
     const id = obj.id ? obj.id : null;

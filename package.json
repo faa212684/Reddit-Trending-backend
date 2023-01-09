@@ -28,7 +28,7 @@
     "graphql-tools": "^8.3.3",
     "jsonwebtoken": "^8.5.1",
     "knex": "^0.21.21",
-    "log4fns": "^1.0.3",
+    "log4fns": "^1.0.4",
     "moment": "^2.29.4",
     "mongodb": "^4.12.1",
     "mongoose": "^6.7.5",

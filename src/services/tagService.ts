@@ -5,7 +5,6 @@ import symbolDict from '../variable/symbolDict.json' assert { type: 'json' };
 import tagWithoutSpace from '../variable/tagWithoutSpace.json' assert { type: 'json' };
 import tagWithSpace from '../variable/tagWithSpace.json' assert { type: 'json' };
 
-
 @Injectable
 export default class TagService {
     @Inject(RedisCache)
@@ -24,6 +23,12 @@ export default class TagService {
         });
     }
 
+    /**
+     * Gets an array of strings that are tags that contain spaces.
+     *
+     * @param {string} s - The string to search for tags.
+     * @returns {string[]} An array of strings that are tags that contain spaces.
+     */
     getTagWithSpace(s: string): string[] {
         let result = [];
         let left = 0;
@@ -46,6 +51,12 @@ export default class TagService {
         return result;
     }
 
+    /**
+     * Gets an array of strings that are tags that do not contain spaces.
+     *
+     * @param {string} s - The string to search for tags.
+     * @returns {string[]} An array of strings that are tags that do not contain spaces.
+     */
     getTagWithoutSpace(s: string): string[] {
         let result = [];
         let newS = s.split(' ');
@@ -62,6 +73,14 @@ export default class TagService {
         return tags;
     }  */
 
+    /**
+     * Gets an array of tags from a given string, or a string representation of the array.
+     *
+     * @param {string} s - The string to search for tags.
+     * @param {boolean} [toString=false] - Whether to return the tags as a string or as an array.
+     * @returns {(string[]|string)} An array of tags or a string representation of the array.
+     * @throws {Error} If there is an issue with the request to the NLTK service.
+     */
     async getTag(s: string, toString = false): Promise<string[] | string> {
         return (
             axios
@@ -82,6 +101,11 @@ export default class TagService {
         );
     }
 
+    /**
+     * Returns a list of symbols for the given list of words.
+     * @param {string[]} s - List of words to get symbols for.
+     * @returns {Promise<string[]>} - List of symbols for the given words.
+     */
     async getSymbols(s: string[]): Promise<string[]> {
         if (!this.symbolDict) {
             const cache = await this.cacheService.get('symbolDict');

@@ -8,6 +8,9 @@ import ThreadStateController from '../controller/threadState';
 import { Inject, Injectable } from '../lib/decorators';
 import type { GraphQLReq } from '../lib/reqParser';
 
+/**
+ * A class for managing a GraphQL server.
+ */
 @Injectable
 export default class GraphqlServer {
     @Inject(ThreadController)

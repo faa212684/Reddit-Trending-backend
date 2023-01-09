@@ -8,9 +8,21 @@ import re
 app = Flask(__name__)
 wnl = WordNetLemmatizer()
 
-#@app.route("/<sentence>")
+
 @app.route("/")
 def lemmatize():    
+    """
+    Tokenizes and lemmatizes the words in a given string.
+    
+    Args:
+        string (str): The input string. Default value is an empty string.
+    
+    Returns:
+        dict: A dictionary with three keys:
+            - "adj": a list of lemmatized adjectives
+            - "noun": a list of lemmatized nouns
+            - "verb": a list of lemmatized verbs, excluding the verb "be"
+    """
     sentence = request.args.get('string', default = '', type = str)
     wordAdj = set()
     wordNoun = set()

@@ -23,6 +23,14 @@ export interface Thread {
     symbol?: string;
 }
 
+/**
+ * Converts a raw database record for a thread into a more usable format.
+ * @param {any} thread - An object representing a raw database record for a thread.
+ * @returns {Thread} A new object with the same properties as `thread`, with the exception of the `tags`
+ * and `isDailyDiscussion` properties. The `tags` property is parsed from a JSON string to an array,
+ * and the `isDailyDiscussion` property is converted from a string representation of a
+ * boolean value (`'1'` or `'0'`) to a boolean value (`true` or `false`).
+ */
 export function parseThreadFromDB(thread: any): Thread {
     return {
         ...thread,
@@ -40,7 +48,13 @@ export default class ThreadService {
 
     constructor() {}
 
-    async all({ forum,  dateRange }: QueryParams): Promise<Thread[]> {
+    /**
+     * Retrieves and returns all threads from a database or other data source based on the specified date range.
+     * @param {QueryParams} - An object representing a set of query parameters.
+     * @param {number} - The number of days to include in the date range.
+     * @returns {Promise<Thread[]>} - A promise that resolves to an array of threads.
+     */
+    async all({ dateRange }: QueryParams): Promise<Thread[]> {
         return (
             this.db.knex
                 .select('*')
@@ -52,10 +66,22 @@ export default class ThreadService {
         );
     }
 
+    /**
+     * Retrieves and returns a single thread from a database or other data source based on the specified symbol.
+     * @param {string} id - The symbol of the thread to retrieve.
+     * @returns {Promise<Thread>} - A promise that resolves to a single thread.
+     */
     async getBySymbol({ id }): Promise<Thread> {
         return this.db.knex.select('*').from(DATABASE.THREAD).where({ id }).first().then(parseThreadFromDB);
     }
 
+    /**
+     * Retrieves and returns a set of threads from a database or other data source based on the specified page number and page size.
+     * @param {QueryParams} - An object representing a set of query parameters.
+     * @param {number} - The number of the page to retrieve.
+     * @param {number} - The number of threads to include in each page.
+     * @returns {Promise<Thread[]>} - A promise that resolves to an array of threads.
+     */
     async byPage({ page, pageSize }: QueryParams): Promise<Thread[]> {
         return this.db
             .knex(DATABASE.THREAD)
@@ -79,6 +105,18 @@ export default class ThreadService {
             .groupBy('forum');
     }
 
+    /**
+     * Saves a set of threads to a database or other data source.
+     *
+     * The saveThreads method then selects the id column from the THREAD database table where the id is in the
+     * array of thread IDs provided as input. This is done to check which threads already exist in the database
+     * and should not be re-inserted. If there are threads that do not already exist in the database, the saveThreads
+     * method inserts them using the INSERT query and the knex library. It returns the IDs of the inserted threads
+     * using the returning method. If no threads are inserted, an empty array is returned.
+     *
+     * @param {Thread[]} threads - An array of threads to be saved.
+     * @returns {Promise<number[] | any>} - A promise that resolves to an array of IDs of the saved threads, or an error object if an error occurred.
+     */
     async saveThreads(threads: Thread[]) {
         const ids = [];
         threads = await Promise.all(

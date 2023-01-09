@@ -4,10 +4,18 @@ import Log from 'log4fns';
 import oracledb from 'oracledb';
 import { Injectable } from '../lib/decorators';
 
+/**
+ * A class for managing database connections.
+ */
 @Injectable
 class Database {
     private readonly _knex: any;
 
+    /**
+     * Creates an instance of Database.
+     *
+     * @param {string} [target='oracledb'] - The database target.
+     */
     constructor(target: string = 'oracledb') {
         Log(`Initializing ${target} connection`);
         const option = {
