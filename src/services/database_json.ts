@@ -65,7 +65,7 @@ export const ThreadStateModel = mongoose.model<ThreadState>(DATABASE.THREAD_STAT
 //ThreadModel.createIndexes();
 //ThreadSchema.index({ id: 1 }, { unique: true });
 
-@Injectable
+//@Injectable
 class DatabaseJSON {
     constructor() {
         this.initConnection();

@@ -1,11 +1,11 @@
 version: "3.7"
 services:
-    worker-test:
+    worker-insert:
         build:
             context: .
         volumes:
             - ".:/app"
             - "/app/node_modules"
         image: worker:dev
-        command: nodemon --exec npm run test
-        container_name: worker-test
+        command: npm run start:insertFail
+        container_name: worker-insert

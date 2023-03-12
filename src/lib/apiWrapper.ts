@@ -14,7 +14,6 @@ export default function apiWrapper(controller: any) {
             })
             .catch((err: any) => {
                 if (err.code && err.msg) return res.status(err.code).json({ message: err.msg });
-                console.log('error', err);
                 res.status(400).json({ message: err.toString() });
             });
     };

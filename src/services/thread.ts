@@ -150,7 +150,7 @@ export default class ThreadService {
                 }
             })
             .catch((err: any) => {
-                console.log(err);
+                //console.log(err);
                 return err;
             });
     }

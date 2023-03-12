@@ -5,13 +5,14 @@ services:
             context: .
             dockerfile: Dockerfile_dev
         ports:
-            - 3003:3001
+            - 127.0.0.1:3003:3001
         environment:
             LD_LIBRARY_PATH: "/opt/oracle/instantclient_19_10"
             WALLET: "/app/oracle/wallet"
         volumes:
             - ".:/app"
             - "/app/node_modules"
+            - "/app/backup"
             - "./oracle:/opt/oracle/instantclient_19_10/network"
         entrypoint : [ "npm","run", "start:nodemon" ]
         container_name: reddit_ts_backend_dev

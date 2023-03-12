@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "start:insertFail": "node insert.js",
     "start:dev": "nodemon index.test.js",
     "test": "npx jest --verbose"
   },

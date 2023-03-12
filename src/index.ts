@@ -6,9 +6,9 @@ import 'reflect-metadata';
 import { Inject } from './lib/decorators';
 import Router from './route';
 import GraphqlServer from './services/graphqlServer';
-
+import injectManager from "./services/injectManager"
 Log.setTimeZone('America/Vancouver');
-Log.setShowDetailInProduction(true)
+//Log.setShowDetailInProduction(true)
 
 class App {
     @Inject(GraphqlServer)
@@ -39,6 +39,7 @@ class App {
         this.instance.listen(PORT);
         router.log();
         Log(`🚀  Server ready on port ${PORT}`);
+        console.log(injectManager.test())
     }
 }
 

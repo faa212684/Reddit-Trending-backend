@@ -215,8 +215,8 @@ class Worker {
             } else if (statusCode == 400) {
                 Log('Insert : ', file, ' success');
             } else {
-                Log('Insert : ', file, ' fail');
-                return;
+                Log('Insert : ', file, ' fail, status code:',statusCode);
+                //return;
             }
         }
     }
@@ -245,6 +245,7 @@ class Worker {
             .catch(async err => {
                 if (err.response) {
                     if (err.response.status === 401) {
+                        Log("Authentication fail, try again")
                         await this.retrieveToken();
                         await this.insertDB(target, data, saveFromFail);
                     }

@@ -1,4 +1,4 @@
-import { TagService } from './TagService';
+import TagService from '../src/services/tagService';
 
 
 describe('TagService', () => {

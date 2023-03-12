@@ -1,5 +1,4 @@
 import Log from 'log4fns';
-Log();
 import { Request } from 'express';
 import { Cache, GET, Inject, Injectable, POST, RequestAuth } from '../lib/decorators';
 import type { QueryParams } from '../lib/reqParser';
@@ -62,6 +61,14 @@ export default class ThreadStateController {
     @GET('/state/all')
     getStateByDateRange(obj: QueryParams) {
         return this.threadStateService.byDateRange(obj);
+    }
+
+    @GET('/state/all_test')
+    async getStateByDateRange_test(obj: QueryParams) {
+        const result = await this.getStateByDateRange(obj);
+        const key = Object.keys(result[0]);
+        const value = result.map(r => Object.values(r));
+        return { key, value };
     }
 
     @Cache(CACHE.PAGE)

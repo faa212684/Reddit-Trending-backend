@@ -4,6 +4,7 @@ import { Inject, Injectable } from '../lib/decorators';
 import symbolDict from '../variable/symbolDict.json' assert { type: 'json' };
 import tagWithoutSpace from '../variable/tagWithoutSpace.json' assert { type: 'json' };
 import tagWithSpace from '../variable/tagWithSpace.json' assert { type: 'json' };
+import Log from 'log4fns';
 
 @Injectable
 export default class TagService {
@@ -95,7 +96,7 @@ export default class TagService {
                     }
                 })
                 .catch(err => {
-                    console.log(err);
+                    Log("get tag fail")
                     return [];
                 })
         );
