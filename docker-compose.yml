@@ -5,7 +5,7 @@ services:
             context: .
             dockerfile: Dockerfile_dev
         ports:
-            - 127.0.0.1:3003:3001
+            - 3003:3001
         environment:
             LD_LIBRARY_PATH: "/opt/oracle/instantclient_19_10"
             WALLET: "/app/oracle/wallet"

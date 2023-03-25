@@ -75,6 +75,7 @@ export default class ThreadService {
         return this.db.knex.select('*').from(DATABASE.THREAD).where({ id }).first().then(parseThreadFromDB);
     }
 
+
     /**
      * Retrieves and returns a set of threads from a database or other data source based on the specified page number and page size.
      * @param {QueryParams} - An object representing a set of query parameters.
@@ -156,12 +157,12 @@ export default class ThreadService {
     }
 
     async updateThread(thread: Thread) {
-        let { id, title, forum, author, tags, isDailyDiscussion } = thread;
+        let { id, title, forum, author, tags, isDailyDiscussion, symbol } = thread;
         //if (typeof rest.created == 'string') rest.created = new Date(rest.created);
         if (Array.isArray(tags)) tags = JSON.stringify(tags);
         return this.db
             .knex(DATABASE.THREAD)
-            .update({ title, forum, author, tags, isDailyDiscussion }, ['id'])
+            .update({ title, forum, author, tags, isDailyDiscussion, symbol: JSON.stringify(symbol)  }, ['id'])
             .where({ id });
     }
 

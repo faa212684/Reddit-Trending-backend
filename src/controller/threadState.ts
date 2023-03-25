@@ -6,6 +6,9 @@ import symbol from '../lib/symbol';
 import RedisCache from '../services/redisCache';
 import type { DetailThreadState } from '../services/threadState';
 import ThreadStateService from '../services/threadState';
+import { parseToMidnight, getNextDayWithSameTime } from '../lib/timeFormat';
+
+
 
 enum CACHE {
     COUNT = '/count/threadState',
@@ -88,6 +91,21 @@ export default class ThreadStateController {
     @GET('/state/comment')
     getStateOnComment(obj: QueryParams) {
         return this.threadStateService.comment(obj);
+    }
+
+    @GET('/state/day')
+    getDailybyDateRange(req: any) {
+        let start;
+        if (req.query) {
+            const date = req.query.date as string;
+            start = parseToMidnight(date);
+        } else {
+            start = req;
+        }
+        //const date = req.query.date as string;
+        //const start = parseToMidnight(date);
+        const end = getNextDayWithSameTime(start);
+        return this.threadStateService.getDailybyDateRange({ start, end });
     }
 
     /* @Cache(CACHE.DISTRIBUTION)

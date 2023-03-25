@@ -6,6 +6,12 @@ import tagWithoutSpace from '../variable/tagWithoutSpace.json' assert { type: 'j
 import tagWithSpace from '../variable/tagWithSpace.json' assert { type: 'json' };
 import Log from 'log4fns';
 
+export interface Tag {
+    adj: string[];
+    noun: string[];
+    verb: string[];
+}
+
 @Injectable
 export default class TagService {
     @Inject(RedisCache)
@@ -82,7 +88,7 @@ export default class TagService {
      * @returns {(string[]|string)} An array of tags or a string representation of the array.
      * @throws {Error} If there is an issue with the request to the NLTK service.
      */
-    async getTag(s: string, toString = false): Promise<string[] | string> {
+    async getTag(s: string, toString = false): Promise<Tag | string> {
         return (
             axios
                 .get('http://nltk:5004', { params: { string: s } })
@@ -96,7 +102,7 @@ export default class TagService {
                     }
                 })
                 .catch(err => {
-                    Log("get tag fail")
+                    Log('get tag fail');
                     return [];
                 })
         );
@@ -105,20 +111,33 @@ export default class TagService {
     /**
      * Returns a list of symbols for the given list of words.
      * @param {string[]} s - List of words to get symbols for.
-     * @returns {Promise<string[]>} - List of symbols for the given words.
+     * @returns {Promise<string{}>} - List of symbols for the given words.
      */
-    async getSymbols(s: string[]): Promise<string[]> {
+    async extractSymbols(words: string[]): Promise<{symbol:string[],other:string[]}> {
+        //const words = this.replaceSpecialChars(s)
+
         if (!this.symbolDict) {
             const cache = await this.cacheService.get('symbolDict');
             this.symbolDict = new Map(Object.entries(cache));
         }
 
-        const result = [];
-        for (const _s of s) {
-            if (this.symbolDict.has(_s)) {
-                result.push(this.symbolDict.get(_s));
+        const result = {
+            symbol: [],
+            other: []
+        };
+
+        for (const w of words) {
+            if (this.symbolDict.has(w)) {
+                result.symbol.push(this.symbolDict.get(w));
+            } else {
+                result.other.push(w);
             }
         }
         return result;
+    }
+
+    replaceSpecialChars(input: string): string[] {
+        const specialChars = /[^a-zA-Z0-9]/g;
+        return input.replace(specialChars, ' ').toLowerCase().split(' ');
     }
 }

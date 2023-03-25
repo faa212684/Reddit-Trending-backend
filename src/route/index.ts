@@ -14,6 +14,7 @@ export default class Router {
     constructor() {
         this.router = express.Router();
         this.routeMap = this.buildRoute();
+        this.router['get']('/path', (req, res) => res.send(this.pathToTable()));
     }
 
     /**
@@ -50,6 +51,15 @@ export default class Router {
      */
     log() {
         console.table(this.routeMap);
+    }
+
+    pathToTable() {
+        const table = `<table><thead><tr><th>Method</th><th>Path</th><th>Handler</th><th>Controller</th></tr></thead><tbody>`;
+        const rows = this.routeMap.map(item => {
+            return `<tr><td>${item.method}</td><td>${item.path}</td><td>${item.handler}</td><td>${item.controller}</td></tr>`;
+        });
+        const html = `${table}${rows.join('')}</tbody></table>`;
+        return html
     }
 
     /**

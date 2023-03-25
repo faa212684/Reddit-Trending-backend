@@ -48,6 +48,6 @@ export function getQueryFromReq(req: any): QueryParams {
     const minComment = Number(obj.minVote || 0);
     const page = Number(obj.page || 0);
     const pageSize = Number(obj.pageSize | 100);
-    const cache = obj.cache || true;
+    const cache = obj.cache==true;
     return { ...obj, forum, dateRange, minVote, minComment, cache, id, page, pageSize };
 }

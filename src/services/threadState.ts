@@ -51,12 +51,14 @@ export default class ThreadStateService {
     }
 
     async bySymbol({ id }: QueryParams): Promise<ThreadState[]> {
-        return this.db.knex
-            .select('*')
-            .from(DATABASE.THREAD_STAT)
-            .where('id', id)
-            //.limit(limit)
-            .orderBy('updated', 'desc');
+        return (
+            this.db.knex
+                .select('*')
+                .from(DATABASE.THREAD_STAT)
+                .where('id', id)
+                //.limit(limit)
+                .orderBy('updated', 'desc')
+        );
     }
 
     stateCallback(vals: any) {
@@ -68,7 +70,7 @@ export default class ThreadStateService {
             .sort((a: any, b: any) => b.change - a.change);
     }
 
-    async lastestOfAll({ forum,  dateRange, minVote, minComment }: QueryParams): Promise<ThreadState[]> {
+    async lastestOfAll({ forum, dateRange, minVote, minComment }: QueryParams): Promise<ThreadState[]> {
         const forumObj = forum ? {} : { [`${DATABASE.THREAD_STAT}.forum`]: forum };
         return this.db.knex
             .select('*')
@@ -94,22 +96,37 @@ export default class ThreadStateService {
                     .as('C')
             )
             .join(`${DATABASE.THREAD} as D`, 'D.id', '=', 'C.id')
-            .where(forumObj)
-            //.limit(limit);
+            .where(forumObj);
+        //.limit(limit);
     }
 
-    async byDateRange({ forum,  dateRange, minVote, minComment }: QueryParams): Promise<ThreadState[]> {
+    async byDateRange({ forum, dateRange, minVote, minComment }: QueryParams): Promise<ThreadState[]> {
         const forumObj = forum ? {} : { [`${DATABASE.THREAD_STAT}.forum`]: forum };
-        return this.db.knex
-            .select(`${DATABASE.THREAD_STAT}.*`, `${DATABASE.THREAD}.title`)
-            .from(DATABASE.THREAD_STAT)
-            .join(DATABASE.THREAD, `${DATABASE.THREAD_STAT}.id`, '=', `${DATABASE.THREAD}.id`)
-            //.limit(limit)
-            .where(forumObj)
-            .andWhere('vote', '>', minVote)
-            .andWhere('comment', '>', minComment)
-            .andWhere('updated', '>', this.getDateByDateRange(dateRange))
-            .orderBy('updated', 'desc');
+        return (
+            this.db.knex
+                .select(`${DATABASE.THREAD_STAT}.*`, `${DATABASE.THREAD}.title`)
+                .from(DATABASE.THREAD_STAT)
+                .join(DATABASE.THREAD, `${DATABASE.THREAD_STAT}.id`, '=', `${DATABASE.THREAD}.id`)
+                //.limit(limit)
+                //.whereBetween('updated', [this.getDateByDateRange(dateRange), dateRangeEnd])
+                .Where(forumObj)
+                .andWhere('vote', '>', minVote)
+                .andWhere('comment', '>', minComment)
+                .andWhere('updated', '>', this.getDateByDateRange(dateRange))
+                .orderBy('updated', 'desc')
+        );
+    }
+
+    async getDailybyDateRange({ start,end}): Promise<ThreadState[]> {
+        return (
+            this.db.knex
+                .select(`${DATABASE.THREAD_STAT}.*`, `${DATABASE.THREAD}.title`)
+                .from(DATABASE.THREAD_STAT)
+                .join(DATABASE.THREAD, `${DATABASE.THREAD_STAT}.id`, '=', `${DATABASE.THREAD}.id`)
+                //.limit(limit)
+                .whereBetween('updated', [start, end])
+                .orderBy('updated', 'desc')
+        );
     }
 
     async vote({ dateRange, minVote }: QueryParams): Promise<DetailThreadState[]> {

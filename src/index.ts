@@ -39,7 +39,7 @@ class App {
         this.instance.listen(PORT);
         router.log();
         Log(`🚀  Server ready on port ${PORT}`);
-        console.log(injectManager.test())
+        //console.log(injectManager.test())
     }
 }
 

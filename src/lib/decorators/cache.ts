@@ -27,13 +27,13 @@ export default function Cache(key: string, requireQuery: boolean = true) {
         const query = getQueryFromReq(defaultReq);
         const _key = requireQuery ? `${key}:${JSON.stringify(query)}` : key;
         const cacheFunction = async () => descriptor.value.apply(target, [query]);
-        CacheManager.periodCall(cacheFunction, _key);
+        //CacheManager.periodCall(cacheFunction, _key);
 
         descriptor.value = async function (req: Request, res: Response) {
             const query = getQueryFromReq(req);
             const _key = requireQuery ? `${key}:${JSON.stringify(query)}` : key;
             const cache = await target.cacheService.get(_key);
-            if (cache) {
+            if (cache && query.cache) {
                 Log('Return result from cache for ', _key);
                 return cache;
             }
