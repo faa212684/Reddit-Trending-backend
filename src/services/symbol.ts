@@ -2,14 +2,21 @@ import { Inject, Injectable } from '../lib/decorators';
 import { DATABASE } from './constant';
 import Database from './database';
 import { parseToMidnight } from '../lib/timeFormat';
+import Log from 'log4fns';
 
 export interface Symbol {
     _id?: string;
     symbol: string;
     created: Date;
-    threads: string;
-    counter: number;
-    verb: string;
+    threads: string[] | string;
+    counter?: number;
+    verb: string | string[];
+    type: string;
+}
+
+function replaceSpecialCharacters(str: string): string {
+    const regex = /[^a-zA-Z0-9,\s]/g; // Matches any character that is not a letter, number, comma, or whitespace
+    return str.replace(regex, '');
 }
 
 @Injectable
@@ -26,63 +33,75 @@ export default class SymbolService {
     async insert(symbols: Symbol[]): Promise<any[]> {
         const symbolWhere = [];
         const symbolObj = new Map<string, Symbol>();
-        for (const symbol of symbols){
+        for (const symbol of symbols) {
             if (typeof symbol.created == 'string') symbol.created = parseToMidnight(new Date(symbol.created));
-            //if (typeof symbol.counter == 'string') symbol.counter = parseInt(symbol.counter);
-            if (Array.isArray(symbol.threads)) {
-                symbol.counter = symbol.threads.length
-                symbol.threads = symbol.threads.join(',');
-            }else{
-                symbol.counter = symbol.threads.split(",").length
+            if (!Array.isArray(symbol.threads)) {
+                symbol.threads = replaceSpecialCharacters(symbol.threads).split(',');
             }
-
-            if (Array.isArray(symbol.verb)) symbol.verb = symbol.verb.join(',');
+            if (!Array.isArray(symbol.verb)) {
+                symbol.verb = replaceSpecialCharacters(symbol.verb).split(',');
+            }
 
             symbolWhere.push([symbol.symbol, symbol.created]);
             symbolObj.set(`${symbol.symbol}${symbol.created}`, symbol);
         }
 
-
+        //Log([...symbolObj.keys()]);
         const existingSymbols = await this.db
             .knex(DATABASE.SYMBOL)
             .select('*')
             .whereIn(['symbol', 'created'], symbolWhere);
 
-        const success = [];
+        let success = [];
         let result = [];
-/*         console.log('symbolWhere', symbolWhere);
+        /*         console.log('symbolWhere', symbolWhere);
         console.log('ExistingSymbol', existingSymbols);
         console.log('symbolObj', ...symbolObj.values()); */
         for (const oriSymbol of existingSymbols) {
             const { symbol, created, verb, threads } = oriSymbol;
             const key = `${symbol}${created}`;
-
+            //Log(key);
             if (symbolObj.has(key)) {
-                const newSymbol = symbolObj.get(key);
-                
-                oriSymbol.verb = [...new Set([...verb.split(','), ...newSymbol.verb.split(',')])].join(',');
-                oriSymbol.threads = [...new Set([...threads.split(','), ...newSymbol.threads.split(',')])]
-                oriSymbol.counter = oriSymbol.threads.length
-                oriSymbol.threads  = oriSymbol.threads.join(',');
-                console.log('Updateing ', oriSymbol);
-                await this.db
-                    .knex(DATABASE.SYMBOL)
-                    .where({ symbol, created })
-                    .update(oriSymbol)
-                    .then(_ => {
-                        success.push(key);
-                        symbolObj.delete(key);
-                    })
-                    .catch(err => console.log(err));
+                try {
+                    const newSymbol = symbolObj.get(key);
+
+                    oriSymbol.verb = verb
+                        ? [...new Set([...verb.split(','), ...newSymbol.verb])].join(',')
+                        : (newSymbol.verb as any).join(',');
+                    oriSymbol.threads = threads
+                        ? [...new Set([...threads.split(','), ...newSymbol.threads])]
+                        : newSymbol.threads;
+                    oriSymbol.counter = oriSymbol.threads.length;
+                    oriSymbol.threads = oriSymbol.threads.join(',');
+                    //Log('Updateing ', oriSymbol);
+                    await this.db
+                        .knex(DATABASE.SYMBOL)
+                        .where({ symbol, created })
+                        .update(oriSymbol)
+                        .then(_ => {
+                            success.push(key);
+                            symbolObj.delete(key);
+                        })
+                        .catch(err => console.log(err));
+                } catch (e) {
+                    console.log(e);
+                }
             }
         }
 
-        const notExistSymbols = [...symbolObj.values()];
-        if (notExistSymbols.length > 0) {
-            result = await this.db.knex(DATABASE.SYMBOL).insert(notExistSymbols).returning(['symbol', 'created']);
+        const notExistSymbols = [...symbolObj.values()].map(symbol => ({
+            ...symbol,
+            counter: typeof symbol.threads === 'string' ? symbol.threads.split(',').length : symbol.threads.length,
+            threads: typeof symbol.threads === 'string' ? symbol.threads : symbol.threads.join(','),
+            verb: typeof symbol.verb === 'string' ? symbol.verb : symbol.verb.join(',')
+        }));
+        for (let i = 0; i < notExistSymbols.length; i += 200) {
+            const batch = notExistSymbols.slice(i, i + 200);
+            result = await this.db.knex(DATABASE.SYMBOL).insert(batch).returning(['symbol', 'created']);
+            success = [...success, ...result];
         }
 
-        return success.concat(result);
+        return success;
         /* const binds = {
             symbol: symbol.symbol,
             created: new Date(),

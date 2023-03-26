@@ -1,9 +1,8 @@
 import axios from 'axios';
 import RedisCache from './redisCache';
 import { Inject, Injectable } from '../lib/decorators';
-import symbolDict from '../variable/symbolDict.json' assert { type: 'json' };
-import tagWithoutSpace from '../variable/tagWithoutSpace.json' assert { type: 'json' };
-import tagWithSpace from '../variable/tagWithSpace.json' assert { type: 'json' };
+import stockDict from '../variable/stock.json' assert { type: 'json' };
+import cryptoDict from '../variable/crypto.json' assert { type: 'json' };
 import Log from 'log4fns';
 
 export interface Tag {
@@ -16,69 +15,13 @@ export interface Tag {
 export default class TagService {
     @Inject(RedisCache)
     private readonly cacheService: RedisCache;
-    private readonly tagWithSpace: Set<string>;
-    private readonly tagWithoutSpace: Set<string>;
-    private symbolDict: Map<string, string>;
-    readonly maxSpace = 4;
+    private readonly stockDict: Record<string, string>;
+    private readonly cryptoDict: Record<string, string>;
 
     constructor() {
-        this.tagWithSpace = new Set(tagWithSpace);
-        this.tagWithoutSpace = new Set(tagWithoutSpace);
-        this.cacheService.set('symbolDict', symbolDict);
-        this.cacheService.get('symbolDict').then(cache => {
-            this.symbolDict = new Map(Object.entries(cache || {}));
-        });
+        this.stockDict = stockDict;
+        this.cryptoDict = cryptoDict;
     }
-
-    /**
-     * Gets an array of strings that are tags that contain spaces.
-     *
-     * @param {string} s - The string to search for tags.
-     * @returns {string[]} An array of strings that are tags that contain spaces.
-     */
-    getTagWithSpace(s: string): string[] {
-        let result = [];
-        let left = 0;
-        let right = 2;
-        let newS = s.split(' ');
-        while (left != right) {
-            const subString = newS.slice(left, right).join(' ');
-            if (this.tagWithSpace.has(subString)) result.push(subString);
-            if (right < newS.length) {
-                if (right - left == this.maxSpace) {
-                    left++;
-                    right = left + 2;
-                } else {
-                    right++;
-                }
-            } else {
-                left++;
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Gets an array of strings that are tags that do not contain spaces.
-     *
-     * @param {string} s - The string to search for tags.
-     * @returns {string[]} An array of strings that are tags that do not contain spaces.
-     */
-    getTagWithoutSpace(s: string): string[] {
-        let result = [];
-        let newS = s.split(' ');
-        newS.forEach(_s => {
-            if (this.tagWithoutSpace.has(_s)) result.push(_s);
-        });
-        return result;
-    }
-
-    /* getTag(s: string, toString = true): string[] | string {
-        s = s.toLowerCase();
-        const tags = [...new Set([...this.getTagWithSpace(s), ...this.getTagWithoutSpace(s)]).values()];
-        if (toString) return JSON.stringify(tags);
-        return tags;
-    }  */
 
     /**
      * Gets an array of tags from a given string, or a string representation of the array.
@@ -113,22 +56,17 @@ export default class TagService {
      * @param {string[]} s - List of words to get symbols for.
      * @returns {Promise<string{}>} - List of symbols for the given words.
      */
-    async extractSymbols(words: string[]): Promise<{symbol:string[],other:string[]}> {
-        //const words = this.replaceSpecialChars(s)
-
-        if (!this.symbolDict) {
-            const cache = await this.cacheService.get('symbolDict');
-            this.symbolDict = new Map(Object.entries(cache));
-        }
-
+    async extractSymbols(words: string[]): Promise<{ stock: string[]; crypto: string[]; other: string[] }> {
         const result = {
-            symbol: [],
-            other: []
+            stock: [],
+            other: [],
+            crypto: []
         };
 
         for (const w of words) {
-            if (this.symbolDict.has(w)) {
-                result.symbol.push(this.symbolDict.get(w));
+            if (this.cryptoDict[w]) result.crypto.push(this.cryptoDict[w]);
+            if (this.stockDict[w]) {
+                result.stock.push(this.stockDict[w]);
             } else {
                 result.other.push(w);
             }
@@ -136,8 +74,9 @@ export default class TagService {
         return result;
     }
 
-    replaceSpecialChars(input: string): string[] {
+    // Useless, actually get the same result from nltk
+    replaceSpecialChars(input: string): string {
         const specialChars = /[^a-zA-Z0-9]/g;
-        return input.replace(specialChars, ' ').toLowerCase().split(' ');
+        return input.replace(specialChars, ' ').toLowerCase()//.split(' ');
     }
 }

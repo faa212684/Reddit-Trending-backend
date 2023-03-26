@@ -15,7 +15,7 @@ export default class TagController {
     async getSymbol(title: string /* req: Request */) {
         //const title = req.query.title as string;
         const tags = (await this.tagService.getTag(title)) as Tag;
-        const { symbol, other } = await this.tagService.extractSymbols(tags.noun);
-        return [symbol, other, tags.verb];
+        const { stock, crypto, other } = await this.tagService.extractSymbols(tags.noun);
+        return [stock, crypto, other, tags.verb];
     }
 }

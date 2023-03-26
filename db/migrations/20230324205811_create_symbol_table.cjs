@@ -5,8 +5,8 @@ exports.up = function (knex) {
         table.string('threads');
         table.integer('counter');
         table.string('verb');
-        //table.primary(['symbol', 'created']);
-        table.primary(['symbol']);
+        table.primary(['symbol', 'created']);
+        //table.primary(['symbol']);
     });
 };
 

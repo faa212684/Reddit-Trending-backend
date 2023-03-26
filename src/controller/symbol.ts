@@ -32,7 +32,6 @@ export default class SymbolController {
     @POST('/symbol')
     saveSymbols(req: Request) {
         let symbols = req.body;
-        //if (typeof symbols == 'string') symbols = JSON.parse(symbols);
         return this.symbolService.insert(symbols);
     }
 
@@ -52,31 +51,45 @@ export default class SymbolController {
     }
 
     @GET('/symbol/day')
-    async getDailySymbol(req: Request) {
+    async getDailySymbol(req: Request): Promise<Symbol[]> {
         const date = req.query.date as string;
         const start = parseToMidnight(date);
 
-        const result = [];
-        const symbolMap = {}
+        const stockMap = {};
+        const cryptoMap: Record<string, Symbol> = {};
         const threadStates = await this.threadStateController.getDailybyDateRange(start);
-        const threadStateMap = {}; // { [date] : [id1,id2,id3] }
-        const titleMap = new Map<string, string[][]>(); // {[id] : [[symbol],[verb]] }
-        for (const threadState of threadStates.slice(0,100)) {
+        const titleMap = {};
+        //Log(threadStates.length)
+        for (const threadState of threadStates) {
             const { id, title } = threadState;
-            //const date = parseToMidnight(updated);
-            //if (!threadStateMap[`${date}`]) threadStateMap[`${date}`] = new Set();
-            //threadStateMap[`${date}`].add(id);
-            if (!titleMap.has(id)) {
-                const [symbolArr, other, verbArr] = await this.tagController.getSymbol(title);
-                //titleMap.set(id, [symbol, verb]);
-                for (const symbol of symbolArr){
-                    if (!symbolMap[symbol])symbolMap[symbol] = [symbol,start,[],[]]
-                    symbolMap[symbol][2] = [...new Set([...symbolMap[symbol][2],id])]
-                    symbolMap[symbol][3] = [...new Set([...symbolMap[symbol][3],...verbArr])]
-                }                
+            if (!titleMap[id]) {
+                const [stockArr, cryptoArr, otherArr, verbArr] = await this.tagController.getSymbol(
+                    title.replace('&amp;', '&')
+                );
+                //Log(stockArr.length,cryptoArr.length)
+                for (const stock of stockArr) {
+                    if (!stockMap[stock])
+                        stockMap[stock] = { symbol: stock, created: start, threads: [], verb: [], type: 'stock' };
+                    stockMap[stock].threads = [...new Set([...stockMap[stock].threads, id])];
+                    stockMap[stock].verb = [...new Set([...stockMap[stock].verb, ...verbArr])];
+                }
+                for (const crypto of cryptoArr) {
+                    if (!cryptoMap[crypto])
+                        cryptoMap[crypto] = { symbol: crypto, created: start, threads: [], verb: [], type: 'crypto' };
+                    cryptoMap[crypto].threads = [...new Set([...cryptoMap[crypto].threads, id])];
+                    cryptoMap[crypto].verb = [...new Set([...cryptoMap[crypto].verb, ...verbArr])];
+                }
+                titleMap[id] = true;
             }
         }
 
-        return Object.values(symbolMap)
+        return [...(Object.values(stockMap) as Symbol[]), ...(Object.values(cryptoMap) as Symbol[])]; //.filter(x=>x.threads.length>3).map(x=>x.symbol)
+    }
+
+    @GET('/symbol/day/insert')
+    async handleDailySymbol(req: Request) {
+        const symbols = await this.getDailySymbol(req);
+        Log(symbols.length);
+        return this.symbolService.insert(symbols);
     }
 }

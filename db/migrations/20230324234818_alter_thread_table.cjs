@@ -1,6 +1,6 @@
 exports.up = function (knex) {
     return knex.schema.table('THREAD', function (table) {
-        table.specificType('symbol', 'RAW(100)');
+        table.string('symbol')
     });
 };
 
