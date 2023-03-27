@@ -12,6 +12,8 @@ export interface Symbol {
     counter?: number;
     verb: string | string[];
     type: string;
+    vote: number;
+    comment: number;
 }
 
 function replaceSpecialCharacters(str: string): string {
@@ -26,8 +28,8 @@ export default class SymbolService {
 
     constructor() {}
 
-    async get(): Promise<Symbol[]> {
-        return this.db.knex.select('*').from(DATABASE.SYMBOL).orderBy('created', 'desc');
+    async get(start): Promise<Symbol[]> {
+        return this.db.knex.select('*').from(DATABASE.SYMBOL).where('created', '>', start).orderBy('created', 'desc');
     }
 
     async insert(symbols: Symbol[]): Promise<any[]> {
@@ -41,6 +43,8 @@ export default class SymbolService {
             if (!Array.isArray(symbol.verb)) {
                 symbol.verb = replaceSpecialCharacters(symbol.verb).split(',');
             }
+            if(typeof symbol.vote==="string") symbol.vote=parseInt(symbol.vote) || 0
+            if(typeof symbol.comment==="string") symbol.vote=parseInt(symbol.comment) || 0
 
             symbolWhere.push([symbol.symbol, symbol.created]);
             symbolObj.set(`${symbol.symbol}${symbol.created}`, symbol);
@@ -73,6 +77,8 @@ export default class SymbolService {
                         : newSymbol.threads;
                     oriSymbol.counter = oriSymbol.threads.length;
                     oriSymbol.threads = oriSymbol.threads.join(',');
+                    oriSymbol.vote = Math.max(oriSymbol.vote,newSymbol.vote)
+                    oriSymbol.comment = Math.max(oriSymbol.vote,newSymbol.comment)
                     //Log('Updateing ', oriSymbol);
                     await this.db
                         .knex(DATABASE.SYMBOL)

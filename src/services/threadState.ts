@@ -3,6 +3,7 @@ import type { QueryParams } from '../lib/reqParser';
 import timeFormat from '../lib/timeFormat';
 import { DATABASE } from './constant';
 import Database from './database';
+import Log from "log4fns"
 
 export interface ThreadState {
     id: string;
@@ -90,7 +91,7 @@ export default class ThreadStateService {
                     )
 
                     .join(`${DATABASE.THREAD_STAT} as A`, function () {
-                        this.on('A.id', '=', 'B.id').andOn('A.updated', '=', 'B.UPDATED');
+                        this.on('A.id', '=', 'B.id')//.andOn('A.updated', '=', 'B.UPDATED');
                     })
                     //.join(`${DATABASE.THREAD_STAT} as A`, { "A.id": "B.id" }, { "A.updated": "B.updated" })
                     .as('C')
@@ -102,6 +103,7 @@ export default class ThreadStateService {
 
     async byDateRange({ forum, dateRange, minVote, minComment }: QueryParams): Promise<ThreadState[]> {
         const forumObj = forum ? {} : { [`${DATABASE.THREAD_STAT}.forum`]: forum };
+        Log("By date range",minVote,minComment)
         return (
             this.db.knex
                 .select(`${DATABASE.THREAD_STAT}.*`, `${DATABASE.THREAD}.title`)
@@ -109,7 +111,7 @@ export default class ThreadStateService {
                 .join(DATABASE.THREAD, `${DATABASE.THREAD_STAT}.id`, '=', `${DATABASE.THREAD}.id`)
                 //.limit(limit)
                 //.whereBetween('updated', [this.getDateByDateRange(dateRange), dateRangeEnd])
-                .Where(forumObj)
+                .where(forumObj)
                 .andWhere('vote', '>', minVote)
                 .andWhere('comment', '>', minComment)
                 .andWhere('updated', '>', this.getDateByDateRange(dateRange))
@@ -130,6 +132,7 @@ export default class ThreadStateService {
     }
 
     async vote({ dateRange, minVote }: QueryParams): Promise<DetailThreadState[]> {
+        Log("vote")
         return this.db.knex
             .select(`${DATABASE.THREAD}.title`, `${DATABASE.THREAD}.forum`, 't1.*')
             .from(
@@ -150,6 +153,7 @@ export default class ThreadStateService {
     }
 
     async comment({ dateRange, minComment }: QueryParams): Promise<DetailThreadState[]> {
+        Log("comment")
         return this.db.knex
             .select(`${DATABASE.THREAD}.title`, `${DATABASE.THREAD}.forum`, 't1.*')
             .from(

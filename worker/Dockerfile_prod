@@ -2,5 +2,6 @@ FROM node
 WORKDIR /app
 COPY package.json ./
 RUN npm install
+RUN apt-get install libpango1.0-dev
 #COPY . .
 CMD [ "npm","run", "start" ]
