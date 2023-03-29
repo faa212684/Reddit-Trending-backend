@@ -5,3 +5,4 @@ export { default as JSONThreadController } from './thread_json';
 export { default as SymbolController } from './symbol';
 export { default as TagController } from './tag';
 
+export { default as StockEditor } from './stockEditor';

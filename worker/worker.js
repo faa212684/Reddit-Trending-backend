@@ -189,7 +189,7 @@ class Worker {
                         forum: thread.data.subreddit,
                         author: thread.data.author
                     };
-                    this.data.threads[id].isDailyDiscussion = thread.data.link_flair_text == 'Daily Discussion';
+                    this.data.threads[id].isDailyDiscussion = thread.data.title.toLowerCase().includes("daily discussion");
                 });
                 this.cache();
             })

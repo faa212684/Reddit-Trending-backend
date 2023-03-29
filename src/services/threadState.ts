@@ -3,7 +3,7 @@ import type { QueryParams } from '../lib/reqParser';
 import timeFormat from '../lib/timeFormat';
 import { DATABASE } from './constant';
 import Database from './database';
-import Log from "log4fns"
+import Log from 'log4fns';
 
 export interface ThreadState {
     id: string;
@@ -16,6 +16,14 @@ export interface ThreadState {
 export interface DetailThreadState extends ThreadState {
     MAX: number;
     MIN: number;
+}
+
+export interface ThreadStateMaxMin {
+    id: string;
+    MAX_VOTE: number;
+    MAX_COMMENT: number;
+    MIN_VOTE: number;
+    MIN_COMMENT: number;
 }
 
 @Injectable
@@ -70,6 +78,36 @@ export default class ThreadStateService {
             }))
             .sort((a: any, b: any) => b.change - a.change);
     }
+    async maxAndMin(start, end) {
+        end.setDate(end.getDate()+1)
+        return this.db.knex
+            .select(
+                'id',
+                this.db.knex.raw('max(??) as max_vote', ['vote']),
+                this.db.knex.raw('max(??) as max_comment', ['comment']),
+                this.db.knex.raw('min(??) as min_vote', ['vote']),
+                this.db.knex.raw('min(??) as min_comment', ['comment'])
+            )
+            .from(DATABASE.THREAD_STAT)
+            .whereBetween('updated', [start, end])
+            .groupBy('id');
+    }
+
+    async testmaxAndMin(start, end) {
+        end.setDate(end.getDate()+1)
+        return this.db.knex
+            .select(
+                'id',
+                this.db.knex.raw('max(??) as max_vote', ['vote']),
+                this.db.knex.raw('max(??) as max_comment', ['comment']),
+                this.db.knex.raw('min(??) as min_vote', ['vote']),
+                this.db.knex.raw('min(??) as min_comment', ['comment'])
+            )
+            .where('id','=','1254guh')
+            .from(DATABASE.THREAD_STAT)
+            .whereBetween('updated', [start, end])
+            .groupBy('id');
+    }
 
     async lastestOfAll({ forum, dateRange, minVote, minComment }: QueryParams): Promise<ThreadState[]> {
         const forumObj = forum ? {} : { [`${DATABASE.THREAD_STAT}.forum`]: forum };
@@ -91,7 +129,7 @@ export default class ThreadStateService {
                     )
 
                     .join(`${DATABASE.THREAD_STAT} as A`, function () {
-                        this.on('A.id', '=', 'B.id')//.andOn('A.updated', '=', 'B.UPDATED');
+                        this.on('A.id', '=', 'B.id'); //.andOn('A.updated', '=', 'B.UPDATED');
                     })
                     //.join(`${DATABASE.THREAD_STAT} as A`, { "A.id": "B.id" }, { "A.updated": "B.updated" })
                     .as('C')
@@ -103,7 +141,7 @@ export default class ThreadStateService {
 
     async byDateRange({ forum, dateRange, minVote, minComment }: QueryParams): Promise<ThreadState[]> {
         const forumObj = forum ? {} : { [`${DATABASE.THREAD_STAT}.forum`]: forum };
-        Log("By date range",minVote,minComment)
+        Log('By date range', minVote, minComment);
         return (
             this.db.knex
                 .select(`${DATABASE.THREAD_STAT}.*`, `${DATABASE.THREAD}.title`)
@@ -119,7 +157,7 @@ export default class ThreadStateService {
         );
     }
 
-    async getDailybyDateRange({ start,end}): Promise<ThreadState[]> {
+    async getDailybyDateRange({ start, end }): Promise<ThreadState[]> {
         return (
             this.db.knex
                 .select(`${DATABASE.THREAD_STAT}.*`, `${DATABASE.THREAD}.title`)
@@ -132,7 +170,7 @@ export default class ThreadStateService {
     }
 
     async vote({ dateRange, minVote }: QueryParams): Promise<DetailThreadState[]> {
-        Log("vote")
+        Log('vote');
         return this.db.knex
             .select(`${DATABASE.THREAD}.title`, `${DATABASE.THREAD}.forum`, 't1.*')
             .from(
@@ -153,7 +191,7 @@ export default class ThreadStateService {
     }
 
     async comment({ dateRange, minComment }: QueryParams): Promise<DetailThreadState[]> {
-        Log("comment")
+        Log('comment');
         return this.db.knex
             .select(`${DATABASE.THREAD}.title`, `${DATABASE.THREAD}.forum`, 't1.*')
             .from(

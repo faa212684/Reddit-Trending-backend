@@ -1,16 +1,15 @@
-from nltk.tag import pos_tag
-from nltk.tokenize import word_tokenize
+import nltk
+from nltk.tree import Tree
 from nltk.stem import WordNetLemmatizer
 from flask import Flask
 from flask import request
 import re
-import os
 
 app = Flask(__name__)
 wnl = WordNetLemmatizer()
 
-os.environ['NLTK_DATA'] = '/usr/local/share'
-@app.route("/")
+
+
 def lemmatize():    
     """
     Tokenizes and lemmatizes the words in a given string.
@@ -44,23 +43,25 @@ def lemmatize():
         wordVerb.remove("be")
     return {"adj":list(wordAdj),"noun":list(wordNoun),"verb":list(wordVerb)}
 
-
-def extract_person_names(sentence):
+@app.route("/")
+def extract_person_names():
     sentence = request.args.get('string', default = '', type = str)
     tokens = nltk.tokenize.word_tokenize(sentence)
     tagged = nltk.pos_tag(tokens)
     named_entities = nltk.ne_chunk(tagged, binary=False)
-    noun = []
+    person_names = []
     verb = []
     for entity in named_entities:
         if type(entity) == tuple and entity[1].startswith('VB') and not entity[1]=="VBZ":
             verb.append(wnl.lemmatize(entity[0], pos='v'))
         if type(entity) == Tree and entity.label() == 'PERSON' :
             person_name = ' '.join([word for word, tag in entity.leaves()])
-            noun.append(person_name)
-        if type(entity) == Tree and entity.label() == 'ORGANIZATION':
-            [noun.append(word) for word, tag in entity.leaves()]
-    return {"noun":noun,"verb":verb}
+            person_names.append(person_name)
+        if type(entity) == Tree and (entity.label() == 'ORGANIZATION' or entity.label() == "GPE"):
+            [person_names.append(word) for word, tag in entity.leaves()]
+    if "be" in verb:
+        verb.remove("be")
+    return {"noun":person_names,"verb":verb}
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0",port=5004, debug=True)
+    app.run(host="0.0.0.0",port=5005, debug=True)

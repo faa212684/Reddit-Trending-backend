@@ -2,13 +2,11 @@ import Log from 'log4fns';
 import { Request } from 'express';
 import { Cache, GET, Inject, Injectable, POST, RequestAuth } from '../lib/decorators';
 import type { QueryParams } from '../lib/reqParser';
-import symbol from '../lib/symbol';
+
 import RedisCache from '../services/redisCache';
 import type { DetailThreadState } from '../services/threadState';
 import ThreadStateService from '../services/threadState';
-import { parseToMidnight, getNextDayWithSameTime } from '../lib/timeFormat';
-
-
+import { parseToMidnight, getNextDayWithSameTime, getStartEndDate } from '../lib/timeFormat';
 
 enum CACHE {
     COUNT = '/count/threadState',
@@ -29,8 +27,6 @@ export default class ThreadStateController {
 
     @Inject(RedisCache, 'cacheService')
     private readonly cacheService: RedisCache;
-
-    static readonly symbol: Set<string> = new Set(symbol);
 
     constructor() {
         //this.symbol = new Set(symbol);
@@ -145,5 +141,21 @@ export default class ThreadStateController {
             updated: new Date(x.updated)
         }));
         return this.threadStateService.saveThreadsStat(threadsState);
+    }
+
+    @GET('/threadsStat/max')
+    getMaxVoteAndComment(req: Request) {
+        
+        const [startDay, endDay] = getStartEndDate(req);
+        Log({startDay, endDay})
+        return this.threadStateService.maxAndMin(startDay, endDay);
+    }
+
+    @GET('/threadsStat/max/test')
+    getMaxVoteAndCommentTest(req: Request) {
+        
+        const [startDay, endDay] = getStartEndDate(req);
+        Log({startDay, endDay})
+        return this.threadStateService.testmaxAndMin(startDay, endDay);
     }
 }

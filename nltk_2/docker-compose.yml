@@ -1,15 +1,15 @@
 version: '3.7'
 services:
-  nltk_dev:
+  nltk_dev_2:
     build: .
-    expose:
-      - 5004
-    container_name: nltk_dev2
+    ports:
+      - "127.0.0.1:5005:5005"
+    container_name: nltk_dev2_2
     volumes:
       - ".:/app"
     #command: pm2 start main.py
-    command: nodemon --exec python3 main.py
-    image: nltk
+    command: python3 main.py
+    image: nltk_2
 
 networks:
   default:

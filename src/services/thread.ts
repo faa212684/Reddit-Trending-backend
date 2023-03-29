@@ -4,12 +4,8 @@ import timeFormat from '../lib/timeFormat';
 import { DATABASE } from './constant';
 import Database from './database';
 import TagService from './tagService';
+import type { Tag } from './tagService';
 
-type Tags = {
-    adj: string[];
-    noun: string[];
-    verb: string[];
-};
 
 export interface Thread {
     _id?: string;
@@ -18,7 +14,7 @@ export interface Thread {
     title: string;
     author: string;
     created: Date | string;
-    tags?: string[] | string | Tags;
+    tags?: string[] | string | Tag;
     isDailyDiscussion: boolean;
     symbol?: string;
 }

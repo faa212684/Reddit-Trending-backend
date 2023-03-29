@@ -5,7 +5,7 @@ import type { QueryParams } from '../lib/reqParser';
 import RedisCache from '../services/redisCache';
 import type { Thread } from '../services/thread';
 import ThreadService from '../services/thread';
-import symbolDict from '../variable/symbolDict.json' assert { type: 'json' };
+//import symbolDict from '../variable/symbolDict.json' assert { type: 'json' };
 
 enum CACHE {
     ALL_THREAD = '/thread',
@@ -132,7 +132,7 @@ export default class ThreadController {
         return time;
     }
 
-    @ParseQueryParams
+    /* @ParseQueryParams
     @GET('/thread/tag/symbol')
     async getSymbolTags(obj: QueryParams) {
         const dict = {};
@@ -148,5 +148,5 @@ export default class ThreadController {
             });
         });
         return dict;
-    }
+    } */
 }

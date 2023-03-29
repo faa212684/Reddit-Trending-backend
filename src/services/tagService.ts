@@ -1,12 +1,12 @@
 import axios from 'axios';
 import RedisCache from './redisCache';
 import { Inject, Injectable } from '../lib/decorators';
-import stockDict from '../variable/stock.json' assert { type: 'json' };
+import stockName from '../variable/stockName.json' assert { type: 'json' };
+import stockSymbol from '../variable/stockSymbol.json' assert { type: 'json' };
 import cryptoDict from '../variable/crypto.json' assert { type: 'json' };
 import Log from 'log4fns';
 
 export interface Tag {
-    adj: string[];
     noun: string[];
     verb: string[];
 }
@@ -15,11 +15,13 @@ export interface Tag {
 export default class TagService {
     @Inject(RedisCache)
     private readonly cacheService: RedisCache;
-    private readonly stockDict: Record<string, string>;
+    private readonly stockName: Record<string, string>;
     private readonly cryptoDict: Record<string, string>;
+    private readonly stockSymbol: Record<string, string>;
 
     constructor() {
-        this.stockDict = stockDict;
+        this.stockName = stockName;
+        this.stockSymbol = stockSymbol;
         this.cryptoDict = cryptoDict;
     }
 
@@ -32,23 +34,22 @@ export default class TagService {
      * @throws {Error} If there is an issue with the request to the NLTK service.
      */
     async getTag(s: string, toString = false): Promise<Tag | string> {
-        return (
-            axios
-                .get('http://nltk:5004', { params: { string: s } })
-                //return fetch(`http://nltk_dev:5005?string=${s}`)
-                //.then(response => response.json())
-                .then(({ data }) => {
-                    if (toString) {
-                        return JSON.stringify(data);
-                    } else {
-                        return data;
-                    }
-                })
-                .catch(err => {
-                    Log('get tag fail');
-                    return [];
-                })
-        );
+        //const {[replacedWords, newSentence]} = processSentence(s);
+        return axios
+            .get('http://nltk_dev_2:5005', { params: { string: s } }) //nltk_dev_2
+            .then(({ data }) => {
+                //data.noun = s; //data.noun.concat(replacedWords);
+                if (toString) {
+                    return JSON.stringify(data);
+                } else {
+                    return data;
+                }
+            })
+            .catch(err => {
+                console.log(err);
+                Log('get tag fail');
+                return [];
+            });
     }
 
     /**
@@ -56,27 +57,36 @@ export default class TagService {
      * @param {string[]} s - List of words to get symbols for.
      * @returns {Promise<string{}>} - List of symbols for the given words.
      */
-    async extractSymbols(words: string[]): Promise<{ stock: string[]; crypto: string[]; other: string[] }> {
+    async extractSymbols(
+        words: string[],
+        symbols: string[],
+        uppercaseWords: string[]
+    ): Promise<{ stockArr: string[]; cryptoArr: string[]; otherArr: string[] }> {
         const result = {
-            stock: [],
-            other: [],
-            crypto: []
+            stockArr: [],
+            otherArr: [],
+            cryptoArr: []
         };
-
-        for (const w of words) {
-            if (this.cryptoDict[w]) result.crypto.push(this.cryptoDict[w]);
-            if (this.stockDict[w]) {
-                result.stock.push(this.stockDict[w]);
-            } else {
-                result.other.push(w);
+        for (let w of [...new Set([...uppercaseWords, ...words])]) {
+            w = w.toLowerCase();
+            if (this.cryptoDict[w]) result.cryptoArr.push(this.cryptoDict[w]);
+            if (this.stockName[w]) {
+                //Log(w);
+                result.stockArr.push(this.stockName[w]);
+            } else if (this.stockSymbol[w]) {
+                result.stockArr.push(this.stockSymbol[w]);
             }
+        }
+
+        for (const w of symbols) {
+            if (this.stockSymbol[w]) {
+                //Log(w);
+                result.stockArr.push(this.stockSymbol[w]);
+            }
+            if (this.cryptoDict[w]) result.cryptoArr.push(this.cryptoDict[w]);
         }
         return result;
     }
 
     // Useless, actually get the same result from nltk
-    replaceSpecialChars(input: string): string {
-        const specialChars = /[^a-zA-Z0-9]/g;
-        return input.replace(specialChars, ' ').toLowerCase()//.split(' ');
-    }
 }
