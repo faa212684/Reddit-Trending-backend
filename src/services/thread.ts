@@ -68,7 +68,7 @@ export default class ThreadService {
      * @returns {Promise<Thread>} - A promise that resolves to a single thread.
      */
     async getBySymbol({ id }): Promise<Thread> {
-        return this.db.knex.select('*').from(DATABASE.THREAD).where({ id }).first().then(parseThreadFromDB);
+        return this.db.knex.select('*').from(DATABASE.THREAD).where({ id:id }).first().then(parseThreadFromDB);
     }
 
 
@@ -152,18 +152,18 @@ export default class ThreadService {
             });
     }
 
-    async updateThread(thread: Thread) {
+    async updateThread(thread: any) {
         let { id, title, forum, author, tags, isDailyDiscussion, symbol } = thread;
         //if (typeof rest.created == 'string') rest.created = new Date(rest.created);
         if (Array.isArray(tags)) tags = JSON.stringify(tags);
         return this.db
             .knex(DATABASE.THREAD)
-            .update({ title, forum, author, tags, isDailyDiscussion, symbol: JSON.stringify(symbol)  }, ['id'])
-            .where({ id });
+            .update({ title:title, forum:forum, author:author, tags:tags, isDailyDiscussion:isDailyDiscussion, symbol: JSON.stringify(symbol)  }, ['id'])
+            .where({ id:id });
     }
 
     async deleteThread(id: string): Promise<any> {
-        return this.db.knex(DATABASE.THREAD).delete({ id });
+        return this.db.knex(DATABASE.THREAD).delete({ id:id });
     }
 }
 /**

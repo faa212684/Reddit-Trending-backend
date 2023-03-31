@@ -9,8 +9,10 @@ RUN echo /opt/oracle/instantclient* > /etc/ld.so.conf.d/oracle-instantclient.con
 COPY ./oracle/admin /opt/oracle/instantclient_19_10/network/admin
 
 COPY package*.json ./
+RUN apt install libsdl-pango-dev -y
 RUN npm install
+#RUN npm i -g typescript ts-node
 COPY . ./
 
 EXPOSE 3000
-CMD [ "npm","run", "start:prod" ]
+#CMD [ "npm","run", "start:prod" ]

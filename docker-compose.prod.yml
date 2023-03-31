@@ -12,13 +12,14 @@ services:
             WALLET: "/app/oracle/wallet"
         volumes:
             - "/app/node_modules"
+            #- ".:/app"
         container_name: reddit_ts_backend_prod
         image: reddit_ts_backend:prod
         #networks:
         #    default:
         #        ipv4_address: 172.19.0.3
         entrypoint: [ "npm", "run", "start:prod" ]
-        restart: always
+        #restart: always
     redis:
         restart: always
         container_name: reddit_redis2
@@ -28,14 +29,14 @@ services:
         #command: [ sh, -c, "rm -f /data/dump.rdb && redis-server" ]
     nltk:
         restart: always
-        build: ./nltk
+        build: ./nltk_v2
         ports:
-            - "5004:5004"
+            - "5005:5005"
         expose:
-            - 5004
+            - 5005
         container_name: nltk_prod
         command: pm2-runtime start main.py
-        image: nltk
+        image: nltk:prod
 
 networks:
     default:

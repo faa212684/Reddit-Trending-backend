@@ -14,7 +14,7 @@
         "paths": {
             "@/*": ["src/*"]
         },
-        "types": ["reflect-metadata", "node", "jest"],
+        "types": [ "node", "jest"],//"reflect-metadata",
         "allowJs": true
     },
     "include": ["src/**/*", "__test__/**/*", "backup/thread_json.test.ts", "__test__/tagService.test.ts", "backup/threadService.test.ts", "backup/timeFormat.test.ts","__test__/cacheManager.test.tsts", "backup/redisCache.test.ts", "backup/threadJSONController.test.ts", "backup/cacheManager.test.ts", "backup/tagservice.test.ts"],

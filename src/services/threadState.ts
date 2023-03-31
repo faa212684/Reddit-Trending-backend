@@ -79,7 +79,7 @@ export default class ThreadStateService {
             .sort((a: any, b: any) => b.change - a.change);
     }
     async maxAndMin(start, end) {
-        end.setDate(end.getDate()+1)
+        end.setDate(end.getDate() + 1);
         return this.db.knex
             .select(
                 'id',
@@ -93,24 +93,22 @@ export default class ThreadStateService {
             .groupBy('id');
     }
 
-    async testmaxAndMin(start, end) {
-        end.setDate(end.getDate()+1)
+    async max(start, end) {
         return this.db.knex
             .select(
-                'id',
-                this.db.knex.raw('max(??) as max_vote', ['vote']),
-                this.db.knex.raw('max(??) as max_comment', ['comment']),
-                this.db.knex.raw('min(??) as min_vote', ['vote']),
-                this.db.knex.raw('min(??) as min_comment', ['comment'])
+                this.db.knex.raw('id, TRUNC(updated) as days, max(??) as max_vote, max(??) as max_comment', [
+                    'vote',
+                    'comment'
+                ])
             )
-            .where('id','=','1254guh')
             .from(DATABASE.THREAD_STAT)
             .whereBetween('updated', [start, end])
-            .groupBy('id');
+            .groupBy('id', 'days')
+            .orderBy('id', 'days');
     }
 
     async lastestOfAll({ forum, dateRange, minVote, minComment }: QueryParams): Promise<ThreadState[]> {
-        const forumObj = forum ? {} : { [`${DATABASE.THREAD_STAT}.forum`]: forum };
+        const forumObj = forum ? {} : { [`${DATABASE.THREAD_STAT}.FORUM`]: forum };
         return this.db.knex
             .select('*')
             .from(
@@ -129,7 +127,7 @@ export default class ThreadStateService {
                     )
 
                     .join(`${DATABASE.THREAD_STAT} as A`, function () {
-                        this.on('A.id', '=', 'B.id'); //.andOn('A.updated', '=', 'B.UPDATED');
+                        this.on('A.id', '=', 'B.id'); //.andOn('A.updated', '=', 'B.updated');
                     })
                     //.join(`${DATABASE.THREAD_STAT} as A`, { "A.id": "B.id" }, { "A.updated": "B.updated" })
                     .as('C')
@@ -140,7 +138,7 @@ export default class ThreadStateService {
     }
 
     async byDateRange({ forum, dateRange, minVote, minComment }: QueryParams): Promise<ThreadState[]> {
-        const forumObj = forum ? {} : { [`${DATABASE.THREAD_STAT}.forum`]: forum };
+        const forumObj = forum ? {} : { [`${DATABASE.THREAD_STAT}.FORUM`]: forum };
         Log('By date range', minVote, minComment);
         return (
             this.db.knex

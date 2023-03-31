@@ -50,6 +50,12 @@ export default class SymbolController {
         return this.symbolService.get(startDay, endDay, type);
     }
 
+    @GET('/symbol/one')
+    getSymbolOne(req: Request) {
+        const id = req.query.id as string;
+        return this.symbolService.getOne(id);
+    }
+
     @GET('/symbol')
     async getAllSymbol(req: Request) {
         try {
@@ -63,9 +69,10 @@ export default class SymbolController {
             /* if (cache) {
                 Log('return from cache');
                 end = Math.min(page + per_page, cache.length);
+                return cache;
                 return {
-                    data: cache.sort((a, b) => b.change[sort] - a.change[sort]).slice(page, end),
-                    total: cache.length
+                    //data: cache.sort((a, b) => b.change[sort] - a.change[sort]).slice(page, end),
+                    //total: cache.length
                 };
             } */
 
@@ -82,66 +89,97 @@ export default class SymbolController {
                         symbol,
                         threads: null,
                         verb: null,
-                        daily: Array(daySpan).fill(0)
+                        dailyVote: Array(daySpan).fill(0),
+                        dailyComment: Array(daySpan).fill(0)
                     };
 
                 const diff = daySpan - getDaysDifference(endDay, new Date(created));
-                symbolMap[symbol].daily[diff] = vote; //(threads as string).split(',').length;
+                symbolMap[symbol].dailyVote[diff] = vote; //(threads as string).split(',').length;
+                symbolMap[symbol].dailyComment[diff] = comment;
                 symbolMap[symbol].threads = combineStrings(symbolMap[symbol].threads, threads);
                 symbolMap[symbol].verb = combineStrings(symbolMap[symbol].verb, verb);
             }
 
-            const threadState = await this.threadStateController.getMaxVoteAndComment(req);
+            /* const threadState = await this.threadStateController.getMaxVoteAndComment(req);
             Log(threadState.length);
+            Log(threadState[0]);
             const threadStateMap: Record<string, ThreadStateMaxMin> = convertArrayToObject(threadState);
-
+ */
             const result = (
                 await Promise.all(
                     Object.values(symbolMap)
                         //.slice(0,10)
                         .map(async (x: any) => {
+                            const { dailyVote, dailyComment } = x;
                             const name = stockDict[x.symbol];
                             const threads = [...new Set(x.threads.split(','))];
                             const verb = [...new Set(x.verb.split(','))];
                             const change = {
                                 vote: {
-                                    min: 0,
-                                    max: 0,
-                                    precentage: 0,
-                                    quantity: 0
+                                    day: 0,
+                                    week: 0,
+                                    month: 0
                                 },
                                 comment: {
-                                    min: 0,
-                                    max: 0,
-                                    precentage: 0,
-                                    quantity: 0
+                                    day: 0,
+                                    week: 0,
+                                    month: 0
                                 }
                             };
-                            threads.forEach((thread: string) => {
+                            const quantity = {
+                                vote: {
+                                    day: dailyVote.at(-1),
+                                    week: dailyVote.at(-7),
+                                    month: dailyVote[0]
+                                },
+                                comment: {
+                                    day: dailyComment.at(-1),
+                                    week: dailyComment.at(-7),
+                                    month: dailyComment[0]
+                                }
+                            };
+                            /* threads.forEach((thread: string) => {
                                 change.vote.min += threadStateMap[thread].MIN_VOTE || 0;
                                 change.vote.max += threadStateMap[thread].MAX_VOTE || 0;
                                 change.comment.min += threadStateMap[thread].MIN_COMMENT || 0;
                                 change.comment.max += threadStateMap[thread].MAX_COMMENT || 0;
-                            });
-                            change.comment.precentage =
-                                ((change.comment.max - change.comment.min) / change.comment.min) * 100;
+                            }); */
 
-                            change.comment.quantity = change.comment.max - change.comment.min;
-                            change.vote.precentage = ((change.vote.max - change.vote.min) / change.vote.min) * 100;
+                            change.comment.day =
+                                (dailyComment.at(-1) - dailyComment.at(-2)) /
+                                (dailyComment.at(-2) == 0 ? 1 : dailyComment.at(-2));
+                            change.vote.day =
+                                (dailyVote.at(-1) - dailyVote.at(-2)) / (dailyVote.at(-2) == 0 ? 1 : dailyVote.at(-2));
 
-                            change.vote.quantity = change.vote.max - change.vote.min;
+                            change.comment.week =
+                                (dailyComment.at(-1) - dailyComment.at(-7)) /
+                                (dailyComment.at(-7) == 0 ? 1 : dailyComment.at(-7));
+                            change.vote.week =
+                                (dailyVote.at(-1) - dailyVote.at(-7)) / (dailyVote.at(-7) == 0 ? 1 : dailyVote.at(-7));
+
+                            change.comment.month =
+                                (dailyComment.at(-1) - dailyComment[0]) / (dailyComment[0] == 0 ? 1 : dailyComment[0]);
+                            change.vote.month =
+                                (dailyVote.at(-1) - dailyVote[0]) / (dailyVote[0] == 0 ? 1 : dailyVote[0]);
 
                             return {
                                 symbol: x.symbol,
                                 name,
                                 change,
+                                quantity,
                                 threads,
                                 verb,
-                                chart: await this.generateChart(x.daily, `${x.symbol}${x.type}`)
+                                chart: await this.generateChart(x.dailyVote, `${x.symbol}${x.type}`)
                             };
                         })
                 )
-            ).filter(x => x.change.vote.max > 10 || x.change.comment.max > 10);
+            ).filter(
+                x =>
+                    x.quantity.vote.day > 20 ||
+                    x.quantity.comment.day > 20 ||
+                    x.quantity.vote.week > 20 ||
+                    x.quantity.comment.week > 20
+            );
             /* .map(x => {
                     const { daily, ...key } = x;
                     return {
@@ -200,11 +238,12 @@ export default class SymbolController {
         // Query the threadStateController for daily thread states within the specified date range
         const threadStates = await this.threadStateController.getDailybyDateRange(start);
 
+        Log(threadStates[0]);
         // Iterate over each thread state and extract symbols from the title
         for (const threadState of threadStates) {
             const { id, title, vote, comment } = threadState;
 
-            // Only process each thread ID once
+            // Only process each thread id once
             if (!titleMap[id]) {
                 // Query the tagController to get arrays of stock, crypto, other, and verb symbols from the thread title
                 const { stockArr, cryptoArr, otherArr, verbArr } = await this.tagController.getSymbol(
@@ -220,8 +259,8 @@ export default class SymbolController {
                             threads: [],
                             verb: [],
                             type: 'stock',
-                            vote,
-                            comment
+                            vote: vote,
+                            comment: comment
                         };
                     stockMap[stock].threads = [...new Set([...stockMap[stock].threads, id])];
                     stockMap[stock].verb = [...new Set([...stockMap[stock].verb, ...verbArr])];
@@ -236,8 +275,8 @@ export default class SymbolController {
                             threads: [],
                             verb: [],
                             type: 'other',
-                            vote,
-                            comment
+                            vote: vote,
+                            comment: comment
                         };
                     otherMap[other].threads = [...new Set([...otherMap[other].threads, id])];
                     otherMap[other].verb = [...new Set([...otherMap[other].verb, ...verbArr])];
@@ -252,14 +291,14 @@ export default class SymbolController {
                             threads: [],
                             verb: [],
                             type: 'crypto',
-                            vote,
-                            comment
+                            vote: vote,
+                            comment: comment
                         };
                     cryptoMap[crypto].threads = [...new Set([...cryptoMap[crypto].threads, id])];
                     cryptoMap[crypto].verb = [...new Set([...cryptoMap[crypto].verb, ...verbArr])];
                 }
 
-                // Mark this thread ID as processed
+                // Mark this thread id as processed
                 titleMap[id] = true;
             }
         }
@@ -290,12 +329,12 @@ export default class SymbolController {
         if (cashedChart) return cashedChart;
 
         //const data = (req.query.date as string).split(',').map(x => parseInt(x));
-        const canvas = createCanvas(150, 40) as any as HTMLCanvasElement;
+        const canvas = createCanvas(150, 60) as any as HTMLCanvasElement;
         const ctx = canvas.getContext('2d');
 
-        var gradient = ctx.createLinearGradient(0, 0, 0, 40);
+        /* var gradient = ctx.createLinearGradient(0, 0, 0, 40);
         gradient.addColorStop(0, 'rgb(49, 56, 96)');
-        gradient.addColorStop(1, 'rgba(49, 56, 96,0.7)');
+        gradient.addColorStop(1, 'rgba(49, 56, 96,0.7)'); */
 
         const options = {
             responsive: false,
@@ -306,7 +345,9 @@ export default class SymbolController {
                     display: false
                 }
             },
-
+            layout: {
+                padding: 3
+            },
             scales: {
                 x: {
                     display: false
@@ -327,8 +368,8 @@ export default class SymbolController {
                         tension: 0.3,
                         borderWidth: 3,
                         borderColor: 'rgb(49, 56, 96)',
-                        fill: true,
-                        backgroundColor: gradient
+                        fill: false
+                        //backgroundColor: gradient
                     }
                 ]
             },

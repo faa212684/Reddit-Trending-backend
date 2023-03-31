@@ -151,11 +151,10 @@ export default class ThreadStateController {
         return this.threadStateService.maxAndMin(startDay, endDay);
     }
 
-    @GET('/threadsStat/max/test')
-    getMaxVoteAndCommentTest(req: Request) {
-        
+    @GET('/threadsStat/maxonly')
+    getMaxVoteAndCommentTest(req: Request) {        
         const [startDay, endDay] = getStartEndDate(req);
         Log({startDay, endDay})
-        return this.threadStateService.testmaxAndMin(startDay, endDay);
+        return this.threadStateService.max(startDay, endDay);
     }
 }

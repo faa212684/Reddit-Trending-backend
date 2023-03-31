@@ -9,7 +9,7 @@ services:
       - ".:/app"
     #command: pm2 start main.py
     command: nodemon --exec python3 main.py
-    image: nltk
+    image: nltk:prod
 
 networks:
   default:

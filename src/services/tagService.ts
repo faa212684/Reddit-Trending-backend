@@ -36,7 +36,8 @@ export default class TagService {
     async getTag(s: string, toString = false): Promise<Tag | string> {
         //const {[replacedWords, newSentence]} = processSentence(s);
         return axios
-            .get('http://nltk_dev_2:5005', { params: { string: s } }) //nltk_dev_2
+            .get('http://nltk_prod:5005', { params: { string: s } }) //nltk_dev_2
+            //.get('http://nltk_dev:5004', { params: { string: s } }) //nltk_dev_2
             .then(({ data }) => {
                 //data.noun = s; //data.noun.concat(replacedWords);
                 if (toString) {

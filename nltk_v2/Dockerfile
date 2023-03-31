@@ -8,3 +8,4 @@ COPY requirements.txt /app/
 RUN pip install -r requirements.txt
 #RUN python -m nltk.downloader popular
 RUN python -m nltk.downloader -d /usr/local/share/nltk_data popular
+COPY . /app/

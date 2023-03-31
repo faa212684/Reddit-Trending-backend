@@ -7,7 +7,7 @@ import { Inject } from './lib/decorators';
 import Router from './route';
 import GraphqlServer from './services/graphqlServer';
 import injectManager from "./services/injectManager"
-import compression from "compression"
+
 Log.setTimeZone('America/Vancouver');
 //Log.setShowDetailInProduction(true)
 

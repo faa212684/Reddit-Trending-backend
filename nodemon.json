@@ -2,6 +2,6 @@
   "watch": ["./src/**/*", "./nodemon.json", "./tsconfig.json", "./__test__/**/*"],
   "ext": "*",
   "ignore": ["src/public","**/*.json"],
-  "exec": "NODE_PATH=./src ts-node-esm  src/index.ts",
+  "exec": "NODE_PATH=./src npx ts-node  src/index.ts",
   "exec_":"npm run test"
 }

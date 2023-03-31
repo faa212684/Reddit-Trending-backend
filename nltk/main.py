@@ -5,11 +5,14 @@ from flask import Flask
 from flask import request
 import re
 import os
+import sys
+import psutil
 
 app = Flask(__name__)
 wnl = WordNetLemmatizer()
 
 os.environ['NLTK_DATA'] = '/usr/local/share'
+
 @app.route("/")
 def lemmatize():    
     """
@@ -62,5 +65,15 @@ def extract_person_names(sentence):
             [noun.append(word) for word, tag in entity.leaves()]
     return {"noun":noun,"verb":verb}
 
+@app.route("/memory_usage")
+def memory_usage():
+    process = psutil.Process(os.getpid())
+    app_memory = process.memory_info().rss / 1024 ** 2  # Memory usage in MB
+    wnl_memory = sys.getsizeof(wnl) / 1024 ** 2  # Memory usage in MB
+    return {
+        "app_memory_usage_mb": app_memory,
+        "wnl_memory_usage_mb": wnl_memory
+    }
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0",port=5004, debug=True)
+    app.run(host="0.0.0.0",port=5004)

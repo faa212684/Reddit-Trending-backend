@@ -44,6 +44,14 @@ export default class SymbolService {
             .orderBy('created', 'desc');
     }
 
+    async getOne(id: string): Promise<Symbol[]> {
+        return this.db.knex
+            .select('*')
+            .from(DATABASE.SYMBOL)
+            .where('symbol', '=', id)
+            .orderBy('created', 'desc');
+    }
+
     async insert(symbols: Symbol[]): Promise<any[]> {
         const symbolWhere = [];
         const symbolObj = new Map<string, Symbol>();
