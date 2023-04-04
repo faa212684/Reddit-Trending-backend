@@ -5,15 +5,15 @@ import Log from 'log4fns';
 import 'reflect-metadata';
 import { Inject } from './lib/decorators';
 import Router from './route';
-import GraphqlServer from './services/graphqlServer';
+//import GraphqlServer from './services/graphqlServer';
 import injectManager from "./services/injectManager"
 
 Log.setTimeZone('America/Vancouver');
 //Log.setShowDetailInProduction(true)
 
 class App {
-    @Inject(GraphqlServer)
-    private readonly graphqlServer: GraphqlServer;
+    /* @Inject(GraphqlServer)
+    private readonly graphqlServer: GraphqlServer; */
     private readonly instance: Express;
 
     constructor() {
@@ -21,7 +21,7 @@ class App {
     }
 
     async init() {
-        await this.graphqlServer.startServer();
+        //await this.graphqlServer.startServer();
         this.initExpressServer();
     }
 
@@ -36,7 +36,7 @@ class App {
             next();
         });
         this.instance.use('/api', router.route);
-        this.instance.use('/graphql', expressMiddleware(this.graphqlServer.server));
+        //this.instance.use('/graphql', expressMiddleware(this.graphqlServer.server));
         this.instance.listen(PORT);
         router.log();
         Log(`🚀  Server ready on port ${PORT}`);

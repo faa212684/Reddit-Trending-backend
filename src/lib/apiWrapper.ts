@@ -13,6 +13,7 @@ export default function apiWrapper(controller: any) {
                 res.status(200).json(result);
             })
             .catch((err: any) => {
+                console.log(err)
                 if (err.code && err.msg) return res.status(err.code).json({ message: err.msg });
                 res.status(400).json({ message: err.toString() });
             });

@@ -15,6 +15,7 @@ import { createCanvas } from 'canvas';
 import ChartJsImage from 'chartjs-to-image';
 import stockDict from '../variable/stockDict.json' assert { type: 'json' };
 import { convertArrayToObject } from '../lib/dataStructure';
+import cryptoDict from '../variable/cryptoDict.json' assert { type: 'json' };
 
 const oneDayInMilliseconds = 24 * 60 * 60 * 1000;
 
@@ -83,19 +84,24 @@ export default class SymbolController {
             Log(symbols.length);
 
             for (const _symbol of symbols) {
-                const { symbol, created, threads, verb, vote, comment } = _symbol;
+                const { symbol, created, threads, verb, vote, comment,type } = _symbol;
                 if (!symbolMap[symbol])
                     symbolMap[symbol] = {
                         symbol,
+                        type,
                         threads: null,
                         verb: null,
-                        dailyVote: Array(daySpan).fill(0),
-                        dailyComment: Array(daySpan).fill(0)
+                        daily:{
+                            vote:Array(daySpan).fill(0),
+                            comment:Array(daySpan).fill(0),
+                            threads:Array(daySpan).fill(0)
+                        }
                     };
 
                 const diff = daySpan - getDaysDifference(endDay, new Date(created));
-                symbolMap[symbol].dailyVote[diff] = vote; //(threads as string).split(',').length;
-                symbolMap[symbol].dailyComment[diff] = comment;
+                symbolMap[symbol].daily.vote[diff] = vote; //(threads as string).split(',').length;
+                symbolMap[symbol].daily.comment[diff] = comment;
+                symbolMap[symbol].daily.threads[diff] = (threads as string).split(',').length;
                 symbolMap[symbol].threads = combineStrings(symbolMap[symbol].threads, threads);
                 symbolMap[symbol].verb = combineStrings(symbolMap[symbol].verb, verb);
             }
@@ -110,8 +116,9 @@ export default class SymbolController {
                     Object.values(symbolMap)
                         //.slice(0,10)
                         .map(async (x: any) => {
-                            const { dailyVote, dailyComment } = x;
-                            const name = stockDict[x.symbol];
+                            //console.log(x.type)
+                            const { daily} = x;
+                            const name = x.type == 'stock' ? stockDict[x.symbol] : cryptoDict[x.symbol];
                             const threads = [...new Set(x.threads.split(','))];
                             const verb = [...new Set(x.verb.split(','))];
                             const change = {
@@ -128,14 +135,14 @@ export default class SymbolController {
                             };
                             const quantity = {
                                 vote: {
-                                    day: dailyVote.at(-1),
-                                    week: dailyVote.at(-7),
-                                    month: dailyVote[0]
+                                    day: daily.vote.at(-1),
+                                    week: daily.vote.at(-7),
+                                    month: daily.vote[0]
                                 },
                                 comment: {
-                                    day: dailyComment.at(-1),
-                                    week: dailyComment.at(-7),
-                                    month: dailyComment[0]
+                                    day: daily.comment.at(-1),
+                                    week: daily.comment.at(-7),
+                                    month: daily.comment[0]
                                 }
                             };
                             /* threads.forEach((thread: string) => {
@@ -146,30 +153,32 @@ export default class SymbolController {
                             }); */
 
                             change.comment.day =
-                                (dailyComment.at(-1) - dailyComment.at(-2)) /
-                                (dailyComment.at(-2) == 0 ? 1 : dailyComment.at(-2));
+                                (daily.comment.at(-1) - daily.comment.at(-2)) /
+                                (daily.comment.at(-2) == 0 ? 1 : daily.comment.at(-2));
                             change.vote.day =
-                                (dailyVote.at(-1) - dailyVote.at(-2)) / (dailyVote.at(-2) == 0 ? 1 : dailyVote.at(-2));
+                                (daily.vote.at(-1) - daily.vote.at(-2)) / (daily.vote.at(-2) == 0 ? 1 : daily.vote.at(-2));
 
                             change.comment.week =
-                                (dailyComment.at(-1) - dailyComment.at(-7)) /
-                                (dailyComment.at(-7) == 0 ? 1 : dailyComment.at(-7));
+                                (daily.comment.at(-1) - daily.comment.at(-7)) /
+                                (daily.comment.at(-7) == 0 ? 1 : daily.comment.at(-7));
                             change.vote.week =
-                                (dailyVote.at(-1) - dailyVote.at(-7)) / (dailyVote.at(-7) == 0 ? 1 : dailyVote.at(-7));
+                                (daily.vote.at(-1) - daily.vote.at(-7)) / (daily.vote.at(-7) == 0 ? 1 : daily.vote.at(-7));
 
                             change.comment.month =
-                                (dailyComment.at(-1) - dailyComment[0]) / (dailyComment[0] == 0 ? 1 : dailyComment[0]);
+                                (daily.comment.at(-1) - daily.comment[0]) / (daily.comment[0] == 0 ? 1 : daily.comment[0]);
                             change.vote.month =
-                                (dailyVote.at(-1) - dailyVote[0]) / (dailyVote[0] == 0 ? 1 : dailyVote[0]);
+                                (daily.vote.at(-1) - daily.vote[0]) / (daily.vote[0] == 0 ? 1 : daily.vote[0]);
 
                             return {
                                 symbol: x.symbol,
+                                daily,
                                 name,
                                 change,
                                 quantity,
                                 threads,
                                 verb,
-                                chart: await this.generateChart(x.dailyVote, `${x.symbol}${x.type}`)
+                                type,
+                                chart: await this.generateChart(x.daily.vote, `${x.symbol}${x.type}`)
                             };
                         })
                 )
@@ -178,7 +187,7 @@ export default class SymbolController {
                     x.quantity.vote.day > 20 ||
                     x.quantity.comment.day > 20 ||
                     x.quantity.vote.week > 20 ||
-                    x.quantity.comment.week > 20
+                    (x.quantity.comment.week > 20 && x.type == type)
             );
             /* .map(x => {
                     const { daily, ...key } = x;

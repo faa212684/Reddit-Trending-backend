@@ -50,13 +50,19 @@ export default class ThreadStateController {
         return this.threadStateService.bySymbol(obj);
     }
 
-    @Cache(CACHE.LASTEST_ALL)
+    //@Cache(CACHE.LASTEST_ALL)
     @GET('/state/lastest')
-    getLastestStateOfAll(obj: QueryParams) {
-        return this.threadStateService.lastestOfAll(obj);
+    async getLastestStateOfAll(req: Request) {
+        Log("getLastestStateOfAll")
+        
+        let symbols = req.query.symbols as string;
+        if (!symbols) throw "No symbol provided"
+        Log(symbols)
+        Log(symbols.length)
+        return this.threadStateService.lastestOfAll(symbols);
     }
 
-    @Cache(CACHE.DATE_RANGE)
+    @Cache(CACHE.DATE_RANGE,true)
     @GET('/state/all')
     getStateByDateRange(obj: QueryParams) {
         return this.threadStateService.byDateRange(obj);
@@ -78,8 +84,7 @@ export default class ThreadStateController {
 
     @Cache(CACHE.VOTE)
     @GET('/state/vote')
-    getStateOnVote(obj: QueryParams) {
-        //Log(obj);
+    getStateOnVote(obj: QueryParams,req: Request) {
         return this.threadStateService.vote(obj);
     }
 

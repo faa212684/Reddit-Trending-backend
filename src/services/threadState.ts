@@ -107,39 +107,29 @@ export default class ThreadStateService {
             .orderBy('id', 'days');
     }
 
-    async lastestOfAll({ forum, dateRange, minVote, minComment }: QueryParams): Promise<ThreadState[]> {
-        const forumObj = forum ? {} : { [`${DATABASE.THREAD_STAT}.FORUM`]: forum };
+    async lastestOfAll(symbols): Promise<ThreadState[]> {
+        Log(symbols.length);
         return this.db.knex
-            .select('*')
+            .select(`${DATABASE.THREAD}.title`, `${DATABASE.THREAD}.created`, `${DATABASE.THREAD}.forum`, 't1.*')
             .from(
                 this.db.knex
-                    .select('A.id', 'A.vote', 'A.comment', 'A.updated')
-                    .from(
-                        this.db.knex
-                            .select('id', this.db.knex.raw('max(??) as updated', ['updated']))
-                            .from(DATABASE.THREAD_STAT)
-                            .where(forumObj)
-                            .andWhere('updated', '>', this.getDateByDateRange(dateRange))
-                            .andWhere('vote', '>', minVote)
-                            .andWhere('comment', '>', minComment)
-                            .groupBy('id')
-                            .as('B')
+                    .select(
+                        'id',
+                        this.db.knex.raw('max(??) as max_vote', ['vote']),
+                        this.db.knex.raw('max(??) as max_comment', ['comment'])
                     )
-
-                    .join(`${DATABASE.THREAD_STAT} as A`, function () {
-                        this.on('A.id', '=', 'B.id'); //.andOn('A.updated', '=', 'B.updated');
-                    })
-                    //.join(`${DATABASE.THREAD_STAT} as A`, { "A.id": "B.id" }, { "A.updated": "B.updated" })
-                    .as('C')
+                    .from(DATABASE.THREAD_STAT)
+                    .whereIn('id', symbols)
+                    .groupBy('id')
+                    .as('t1')
             )
-            .join(`${DATABASE.THREAD} as D`, 'D.id', '=', 'C.id')
-            .where(forumObj);
-        //.limit(limit);
+            .join(DATABASE.THREAD, `t1.id`, '=', `${DATABASE.THREAD}.id`);
+        //.then(this.stateCallback);
     }
 
     async byDateRange({ forum, dateRange, minVote, minComment }: QueryParams): Promise<ThreadState[]> {
         const forumObj = forum ? {} : { [`${DATABASE.THREAD_STAT}.FORUM`]: forum };
-        Log('By date range', minVote, minComment);
+
         return (
             this.db.knex
                 .select(`${DATABASE.THREAD_STAT}.*`, `${DATABASE.THREAD}.title`)
@@ -169,23 +159,27 @@ export default class ThreadStateService {
 
     async vote({ dateRange, minVote }: QueryParams): Promise<DetailThreadState[]> {
         Log('vote');
-        return this.db.knex
-            .select(`${DATABASE.THREAD}.title`, `${DATABASE.THREAD}.forum`, 't1.*')
-            .from(
-                this.db.knex
-                    .select(
-                        'id',
-                        this.db.knex.raw('max(??) as max', ['vote']),
-                        this.db.knex.raw('min(??) as min', ['vote'])
-                    )
-                    .from(DATABASE.THREAD_STAT)
-                    .where('vote', '>', minVote)
-                    .andWhere('updated', '>', this.getDateByDateRange(dateRange))
-                    .groupBy('id')
-                    .as('t1')
-            )
-            .join(DATABASE.THREAD, `t1.id`, '=', `${DATABASE.THREAD}.id`)
-            .then(this.stateCallback);
+        //const { dateRange, minVote } = obj;
+        return (
+            this.db.knex
+                .select(`${DATABASE.THREAD}.title`, `${DATABASE.THREAD}.forum`, 't1.*')
+                .from(
+                    this.db.knex
+                        .select(
+                            'id',
+                            this.db.knex.raw('max(??) as max', ['vote']),
+                            this.db.knex.raw('min(??) as min', ['vote'])
+                        )
+                        .from(DATABASE.THREAD_STAT)
+                        .where('vote', '>', minVote)
+                        .andWhere('updated', '>', this.getDateByDateRange(dateRange))
+                        .groupBy('id')
+                        .as('t1')
+                )
+                .join(DATABASE.THREAD, `t1.id`, '=', `${DATABASE.THREAD}.id`)
+                //.then(result => (threads ? result.whereIn('id', JSON.parse(threads)) : result))
+                .then(this.stateCallback)
+        );
     }
 
     async comment({ dateRange, minComment }: QueryParams): Promise<DetailThreadState[]> {

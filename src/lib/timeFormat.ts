@@ -34,7 +34,7 @@ export function getDaysDifference(date1, date2) {
  * @param {number} day - The number of days to go back if no start date is provided.
  * @returns {Date[]} An array containing the start and end dates.
  */
-export function getStartEndDate(req: Request, day = 7): Date[] {
+export function getStartEndDate(req: Request, day = 30): Date[] {
     // Extract start and end parameters from the request query string
     const start = req.query.start as string;
     const end = req.query.end as string;
