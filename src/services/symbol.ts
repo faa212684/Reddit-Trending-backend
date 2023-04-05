@@ -35,21 +35,19 @@ export default class SymbolService {
             .select('ts.id', 'ts.vote', 's.symbol');
     }
 
-    async get(start: Date, end: Date, type: string): Promise<Symbol[]> {
+    async get(start: Date, end: Date, type: string, target: string | null = null): Promise<Symbol[]> {
         return this.db.knex
             .select('*')
             .from(DATABASE.SYMBOL)
             .whereBetween('created', [start, end])
             .andWhere('type', '=', type)
-            .orderBy('created', 'desc');
+            .where((builder) =>target?builder.where('symbol', target) : builder)
+            .orderBy('created', 'desc')
+            //.then(result => (target ? result.where('symbol', target) : result));
     }
 
     async getOne(id: string): Promise<Symbol[]> {
-        return this.db.knex
-            .select('*')
-            .from(DATABASE.SYMBOL)
-            .where('symbol', '=', id)
-            .orderBy('created', 'desc');
+        return this.db.knex.select('*').from(DATABASE.SYMBOL).where('symbol', '=', id).orderBy('created', 'desc');
     }
 
     async insert(symbols: Symbol[]): Promise<any[]> {

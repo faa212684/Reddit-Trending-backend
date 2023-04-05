@@ -63,38 +63,39 @@ export default class SymbolController {
             const page = parseInt(req.query.page as string) || 0;
             const per_page = parseInt(req.query.per_page as string) || 25;
             const type = (req.query.type as string) || 'stock';
+            const id = (req.query.id as string) || null;
 
-            const cache = await this.cache.get(`${CACHE.SYMBOL}${type}`);
+            const cache = await this.cache.get(`${CACHE.SYMBOL}${type}${id}`);
             let end = page + per_page;
 
-            /* if (cache) {
+            if (cache) {
                 Log('return from cache');
                 end = Math.min(page + per_page, cache.length);
                 return cache;
-                return {
-                    //data: cache.sort((a, b) => b.change[sort] - a.change[sort]).slice(page, end),
-                    //total: cache.length
-                };
-            } */
+                // return {
+                //data: cache.sort((a, b) => b.change[sort] - a.change[sort]).slice(page, end),
+                //total: cache.length
+                //};
+            }
 
             const symbolMap = {};
             const [startDay, endDay] = getStartEndDate(req);
             const daySpan = getDaysDifference(startDay, endDay);
-            const symbols: Symbol[] = await this.symbolService.get(startDay, endDay, type);
+            const symbols: Symbol[] = await this.symbolService.get(startDay, endDay, type, id);
             Log(symbols.length);
 
             for (const _symbol of symbols) {
-                const { symbol, created, threads, verb, vote, comment,type } = _symbol;
+                const { symbol, created, threads, verb, vote, comment, type } = _symbol;
                 if (!symbolMap[symbol])
                     symbolMap[symbol] = {
                         symbol,
                         type,
                         threads: null,
                         verb: null,
-                        daily:{
-                            vote:Array(daySpan).fill(0),
-                            comment:Array(daySpan).fill(0),
-                            threads:Array(daySpan).fill(0)
+                        daily: {
+                            vote: Array(daySpan).fill(0),
+                            comment: Array(daySpan).fill(0),
+                            threads: Array(daySpan).fill(0)
                         }
                     };
 
@@ -117,7 +118,7 @@ export default class SymbolController {
                         //.slice(0,10)
                         .map(async (x: any) => {
                             //console.log(x.type)
-                            const { daily} = x;
+                            const { daily } = x;
                             const name = x.type == 'stock' ? stockDict[x.symbol] : cryptoDict[x.symbol];
                             const threads = [...new Set(x.threads.split(','))];
                             const verb = [...new Set(x.verb.split(','))];
@@ -156,16 +157,19 @@ export default class SymbolController {
                                 (daily.comment.at(-1) - daily.comment.at(-2)) /
                                 (daily.comment.at(-2) == 0 ? 1 : daily.comment.at(-2));
                             change.vote.day =
-                                (daily.vote.at(-1) - daily.vote.at(-2)) / (daily.vote.at(-2) == 0 ? 1 : daily.vote.at(-2));
+                                (daily.vote.at(-1) - daily.vote.at(-2)) /
+                                (daily.vote.at(-2) == 0 ? 1 : daily.vote.at(-2));
 
                             change.comment.week =
                                 (daily.comment.at(-1) - daily.comment.at(-7)) /
                                 (daily.comment.at(-7) == 0 ? 1 : daily.comment.at(-7));
                             change.vote.week =
-                                (daily.vote.at(-1) - daily.vote.at(-7)) / (daily.vote.at(-7) == 0 ? 1 : daily.vote.at(-7));
+                                (daily.vote.at(-1) - daily.vote.at(-7)) /
+                                (daily.vote.at(-7) == 0 ? 1 : daily.vote.at(-7));
 
                             change.comment.month =
-                                (daily.comment.at(-1) - daily.comment[0]) / (daily.comment[0] == 0 ? 1 : daily.comment[0]);
+                                (daily.comment.at(-1) - daily.comment[0]) /
+                                (daily.comment[0] == 0 ? 1 : daily.comment[0]);
                             change.vote.month =
                                 (daily.vote.at(-1) - daily.vote[0]) / (daily.vote[0] == 0 ? 1 : daily.vote[0]);
 
@@ -184,6 +188,7 @@ export default class SymbolController {
                 )
             ).filter(
                 x =>
+                    id ||
                     x.quantity.vote.day > 20 ||
                     x.quantity.comment.day > 20 ||
                     x.quantity.vote.week > 20 ||
@@ -198,7 +203,7 @@ export default class SymbolController {
                 }); */
             //.sort((a: any, b: any) => b.change.vote.max - a.change..vote.max);
 
-            await this.cache.set(`${CACHE.SYMBOL}${type}`, result);
+            await this.cache.set(`${CACHE.SYMBOL}${type}${id}`, result);
             end = Math.min(page + per_page, result.length);
             //return { data: result.slice(page, end), total: result.length };
             return result;
@@ -268,11 +273,13 @@ export default class SymbolController {
                             threads: [],
                             verb: [],
                             type: 'stock',
-                            vote: vote,
-                            comment: comment
+                            vote: 0,
+                            comment: 0
                         };
                     stockMap[stock].threads = [...new Set([...stockMap[stock].threads, id])];
                     stockMap[stock].verb = [...new Set([...stockMap[stock].verb, ...verbArr])];
+                    stockMap[stock].vote+=vote
+                    stockMap[stock].comment+=comment
                 }
 
                 // Process each other symbol
@@ -284,11 +291,13 @@ export default class SymbolController {
                             threads: [],
                             verb: [],
                             type: 'other',
-                            vote: vote,
-                            comment: comment
+                            vote: 0,
+                            comment: 0
                         };
                     otherMap[other].threads = [...new Set([...otherMap[other].threads, id])];
                     otherMap[other].verb = [...new Set([...otherMap[other].verb, ...verbArr])];
+                    otherMap[other].vote+=vote
+                    otherMap[other].comment+=comment
                 }
 
                 // Process each crypto symbol
@@ -300,11 +309,13 @@ export default class SymbolController {
                             threads: [],
                             verb: [],
                             type: 'crypto',
-                            vote: vote,
-                            comment: comment
+                            vote: 0,
+                            comment: 0
                         };
                     cryptoMap[crypto].threads = [...new Set([...cryptoMap[crypto].threads, id])];
                     cryptoMap[crypto].verb = [...new Set([...cryptoMap[crypto].verb, ...verbArr])];
+                    cryptoMap[crypto].vote+=vote
+                    cryptoMap[crypto].comment+=comment
                 }
 
                 // Mark this thread id as processed

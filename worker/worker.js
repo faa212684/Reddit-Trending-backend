@@ -16,6 +16,11 @@ function timeAdjust(date, getMS = false) {
     return new Date(result);
 }
 
+function containsDailyAndDiscussion(str) {
+    str=str.toLowerCase()
+    return str.includes('daily') && str.includes('discussion');
+  }
+
 class Worker {
     constructor(forums, insertDBInterval = 1800, scrapeInterval = 600) {
         //this.createFile()
@@ -189,7 +194,7 @@ class Worker {
                         forum: thread.data.subreddit,
                         author: thread.data.author
                     };
-                    this.data.threads[id].isDailyDiscussion = thread.data.title.toLowerCase().includes("daily discussion");
+                    this.data.threads[id].isDailyDiscussion = containsDailyAndDiscussion(thread.data.title);
                 });
                 this.cache();
             })

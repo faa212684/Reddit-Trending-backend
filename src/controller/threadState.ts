@@ -59,7 +59,8 @@ export default class ThreadStateController {
         if (!symbols) throw "No symbol provided"
         Log(symbols)
         Log(symbols.length)
-        return this.threadStateService.lastestOfAll(symbols);
+
+        return this.threadStateService.lastestOfAll(JSON.parse(symbols).slice(0,1000));
     }
 
     @Cache(CACHE.DATE_RANGE,true)
