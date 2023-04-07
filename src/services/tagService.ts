@@ -80,11 +80,12 @@ export default class TagService {
         }
 
         for (const w of symbols) {
-            if (this.stockSymbol[w]) {
+            /* if (this.stockSymbol[w]) {
                 //Log(w);
                 result.stockArr.push(this.stockSymbol[w]);
-            }
+            } */
             if (this.cryptoDict[w]) result.cryptoArr.push(this.cryptoDict[w]);
+            result.stockArr.push(w);
         }
         return result;
     }

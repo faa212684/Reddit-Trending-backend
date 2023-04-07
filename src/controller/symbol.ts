@@ -19,6 +19,14 @@ import cryptoDict from '../variable/cryptoDict.json' assert { type: 'json' };
 
 const oneDayInMilliseconds = 24 * 60 * 60 * 1000;
 
+interface Change {
+    [key: string]: {
+        day: number | string;
+        week: number | string;
+        month: number | string;
+    };
+}
+
 function combineStrings(s1, s2) {
     if (!s1 && !s2) return '';
     if (!s1) return s2;
@@ -122,7 +130,7 @@ export default class SymbolController {
                             const name = x.type == 'stock' ? stockDict[x.symbol] : cryptoDict[x.symbol];
                             const threads = [...new Set(x.threads.split(','))];
                             const verb = [...new Set(x.verb.split(','))];
-                            const change = {
+                            const change: Change = {
                                 vote: {
                                     day: 0,
                                     week: 0,
@@ -153,7 +161,46 @@ export default class SymbolController {
                                 change.comment.max += threadStateMap[thread].MAX_COMMENT || 0;
                             }); */
 
-                            change.comment.day =
+                            change.comment.day = (daily.comment.at(-1) - daily.comment.at(-2)) / daily.comment.at(-2);
+
+                            change.vote.day = (daily.vote.at(-1) - daily.vote.at(-2)) / daily.vote.at(-2);
+                            change.comment.week = (daily.comment.at(-1) - daily.comment.at(-7)) / daily.comment.at(-7);
+
+                            change.vote.week = (daily.vote.at(-1) - daily.vote.at(-7)) / daily.vote.at(-7);
+
+                            change.comment.month = (daily.comment.at(-1) - daily.comment[0]) / daily.comment[0];
+
+                            change.vote.month = (daily.vote.at(-1) - daily.vote[0]) / daily.vote[0];
+
+                            /* change.comment.day =
+                                daily.comment.at(-2) != 0
+                                    ? (daily.comment.at(-1) - daily.comment.at(-2)) / daily.comment.at(-2)
+                                    : 'N/A';
+
+                            change.vote.day =
+                                daily.vote.at(-2) != 0
+                                    ? (daily.vote.at(-1) - daily.vote.at(-2)) / daily.vote.at(-2)
+                                    : 'N/A';
+
+                            change.comment.week =
+                                daily.comment.at(-7) != 0
+                                    ? (daily.comment.at(-1) - daily.comment.at(-7)) / daily.comment.at(-7)
+                                    : 'N/A';
+
+                            change.vote.week =
+                                daily.vote.at(-7) != 0
+                                    ? (daily.vote.at(-1) - daily.vote.at(-7)) / daily.vote.at(-7)
+                                    : 'N/A';
+
+                            change.comment.month =
+                                daily.comment[0] != 0
+                                    ? (daily.comment.at(-1) - daily.comment[0]) / daily.comment[0]
+                                    : 'N/A';
+
+                            change.vote.month =
+                                daily.vote[0] != 0 ? (daily.vote.at(-1) - daily.vote[0]) / daily.vote[0] : 'N/A'; */
+
+                            /* change.comment.day =
                                 (daily.comment.at(-1) - daily.comment.at(-2)) /
                                 (daily.comment.at(-2) == 0 ? 1 : daily.comment.at(-2));
                             change.vote.day =
@@ -171,7 +218,7 @@ export default class SymbolController {
                                 (daily.comment.at(-1) - daily.comment[0]) /
                                 (daily.comment[0] == 0 ? 1 : daily.comment[0]);
                             change.vote.month =
-                                (daily.vote.at(-1) - daily.vote[0]) / (daily.vote[0] == 0 ? 1 : daily.vote[0]);
+                                (daily.vote.at(-1) - daily.vote[0]) / (daily.vote[0] == 0 ? 1 : daily.vote[0]); */
 
                             return {
                                 symbol: x.symbol,
@@ -203,9 +250,8 @@ export default class SymbolController {
                 }); */
             //.sort((a: any, b: any) => b.change.vote.max - a.change..vote.max);
 
-            await this.cache.set(`${CACHE.SYMBOL}${type}${id}`, result);
+            //await this.cache.set(`${CACHE.SYMBOL}${type}${id}`, result);
             end = Math.min(page + per_page, result.length);
-            //return { data: result.slice(page, end), total: result.length };
             return result;
         } catch (e) {
             console.log(e);
@@ -278,8 +324,8 @@ export default class SymbolController {
                         };
                     stockMap[stock].threads = [...new Set([...stockMap[stock].threads, id])];
                     stockMap[stock].verb = [...new Set([...stockMap[stock].verb, ...verbArr])];
-                    stockMap[stock].vote+=vote
-                    stockMap[stock].comment+=comment
+                    stockMap[stock].vote += vote;
+                    stockMap[stock].comment += comment;
                 }
 
                 // Process each other symbol
@@ -296,8 +342,8 @@ export default class SymbolController {
                         };
                     otherMap[other].threads = [...new Set([...otherMap[other].threads, id])];
                     otherMap[other].verb = [...new Set([...otherMap[other].verb, ...verbArr])];
-                    otherMap[other].vote+=vote
-                    otherMap[other].comment+=comment
+                    otherMap[other].vote += vote;
+                    otherMap[other].comment += comment;
                 }
 
                 // Process each crypto symbol
@@ -314,8 +360,8 @@ export default class SymbolController {
                         };
                     cryptoMap[crypto].threads = [...new Set([...cryptoMap[crypto].threads, id])];
                     cryptoMap[crypto].verb = [...new Set([...cryptoMap[crypto].verb, ...verbArr])];
-                    cryptoMap[crypto].vote+=vote
-                    cryptoMap[crypto].comment+=comment
+                    cryptoMap[crypto].vote += vote;
+                    cryptoMap[crypto].comment += comment;
                 }
 
                 // Mark this thread id as processed

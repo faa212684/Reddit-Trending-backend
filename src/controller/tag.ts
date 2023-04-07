@@ -38,7 +38,7 @@ function processSentence(sentence) {
     const remainingWords = [];
 
     for (const word of words) {
-        if (word.startsWith('$')) {
+        if (/^\$[a-zA-Z]/.test(word)) {
             symbols.push(word.toLowerCase().replace(/^\$/, ''));
         } else if (word === word.toUpperCase() && word.length>1 && /^[^0-9]*$/.test(word)) {
             uppercaseWords.push(word.toLowerCase());

@@ -54,6 +54,10 @@ export default class SymbolService {
         const symbolWhere = [];
         const symbolObj = new Map<string, Symbol>();
         for (const symbol of symbols) {
+            /* if(!symbol.symbol || !symbol.created){
+                console.log(symbol)
+                return
+            } */
             if (typeof symbol.created == 'string') symbol.created = parseToMidnight(new Date(symbol.created));
             if (!Array.isArray(symbol.threads)) {
                 symbol.threads = replaceSpecialCharacters(symbol.threads).split(',');
@@ -87,12 +91,12 @@ export default class SymbolService {
                 try {
                     const newSymbol = symbolObj.get(key);
 
-                    oriSymbol.verb = verb
+                    oriSymbol.verb = (newSymbol.verb as any).join(',')/* verb
                         ? [...new Set([...verb.split(','), ...newSymbol.verb])].join(',')
-                        : (newSymbol.verb as any).join(',');
-                    oriSymbol.threads = threads
+                        : (newSymbol.verb as any).join(','); */
+                    oriSymbol.threads = newSymbol.threads/* threads
                         ? [...new Set([...threads.split(','), ...newSymbol.threads])]
-                        : newSymbol.threads;
+                        : newSymbol.threads; */
                     oriSymbol.counter = oriSymbol.threads.length;
                     oriSymbol.threads = oriSymbol.threads.join(',');
                     oriSymbol.vote = Math.max(oriSymbol.vote, newSymbol.vote);
@@ -119,6 +123,7 @@ export default class SymbolService {
             threads: typeof symbol.threads === 'string' ? symbol.threads : symbol.threads.join(','),
             verb: typeof symbol.verb === 'string' ? symbol.verb : symbol.verb.join(',')
         }));
+        //console.log(notExistSymbols)
         for (let i = 0; i < notExistSymbols.length; i += 200) {
             const batch = notExistSymbols.slice(i, i + 200);
             result = await this.db.knex(DATABASE.SYMBOL).insert(batch).returning(['symbol', 'created']);
