@@ -4,4 +4,4 @@ docker-compose -f docker-compose.prod.yml up --detach --build  backend_prod
 
 knex migrate:down --knexfile=/app/knexfile.cjs
 
-select * from THREAD where "id" = '126cwsz';
+select * from THREAD where "id" = '126cwsz';docker system prune

@@ -22,7 +22,8 @@ class App {
 
     async init() {
         //await this.graphqlServer.startServer();
-        this.initExpressServer();
+        await this.initExpressServer();
+        await injectManager.get("SymbolController").handeInsertSymbol()
     }
 
     initExpressServer() {

@@ -1,21 +1,25 @@
-import Log from 'log4fns';
+import { createCanvas } from 'canvas';
+import Chart from 'chart.js/auto';
 import { Request } from 'express';
-import { Cache, DELETE, GET, Inject, Injectable, ParseQueryParams, POST, PUT, RequestAuth } from '../lib/decorators';
-import type { QueryParams } from '../lib/reqParser';
+import Log from 'log4fns';
+import { DELETE, GET, Inject, Injectable, POST, PUT } from '../lib/decorators';
+import { formatDate } from '../lib/time';
+import { getDaysDifference, getStartEndDate, parseToMidnight } from '../lib/timeFormat';
 import RedisCache from '../services/redisCache';
 import type { Symbol } from '../services/symbol';
 import SymbolService from '../services/symbol';
-import { ThreadController } from '../services';
-import type { ThreadState, ThreadStateMaxMin } from '../services';
-import ThreadStateController from './threadState';
-import { parseToMidnight, getDaysDifference, getStartEndDate } from '../lib/timeFormat';
-import TagController from './tag';
-import Chart from 'chart.js/auto';
-import { createCanvas } from 'canvas';
-import ChartJsImage from 'chartjs-to-image';
-import stockDict from '../variable/stockDict.json' assert { type: 'json' };
-import { convertArrayToObject } from '../lib/dataStructure';
 import cryptoDict from '../variable/cryptoDict.json' assert { type: 'json' };
+import stockDict from '../variable/stockDict.json' assert { type: 'json' };
+import TagController from './tag';
+import ThreadStateController from './threadState';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+import * as fs from 'fs';
+
+const __filename = fileURLToPath(import.meta.url);
+
+const __dirname = path.dirname(__filename);
 
 const oneDayInMilliseconds = 24 * 60 * 60 * 1000;
 
@@ -40,6 +44,8 @@ enum CACHE {
 
 @Injectable
 export default class SymbolController {
+    private last: null | { symbol: number } = null;
+
     @Inject(SymbolService)
     private readonly symbolService: SymbolService;
 
@@ -79,7 +85,7 @@ export default class SymbolController {
             if (cache) {
                 Log('return from cache');
                 end = Math.min(page + per_page, cache.length);
-                return cache;
+                //return cache;
                 // return {
                 //data: cache.sort((a, b) => b.change[sort] - a.change[sort]).slice(page, end),
                 //total: cache.length
@@ -379,6 +385,7 @@ export default class SymbolController {
 
     @GET('/symbol/day/insert')
     async handleDailySymbol(req: Request) {
+        Log("handleDailySymbol")
         const symbols = await this.getDailySymbol(req);
         Log(symbols.length);
         return this.symbolService.insert(symbols);
@@ -444,5 +451,39 @@ export default class SymbolController {
         const dataUrl = canvas.toDataURL();
         this.cache.set(key, dataUrl);
         return dataUrl;
+    }
+
+    getLatest() {
+        const last = fs.existsSync(path.join(__dirname, 'last.json'))
+            ? JSON.parse(fs.readFileSync(path.join(__dirname, 'last.json'), 'utf-8'))
+            : {};
+        if (!('symbol' in last)) last.symbol = Date.now();
+        Log('Last insert symbol:', formatDate(last.symbol));
+        this.last = last;
+        this.updateLatest();
+    }
+
+    updateLatest() {
+        fs.writeFileSync(path.join(__dirname, 'last.json'), JSON.stringify(this.last));
+    }
+
+    async handeInsertSymbol() {
+        Log(__dirname);
+        if (!this.last) this.getLatest();
+        const timeOffset = 3600 * 12 * 1000 - (Date.now() - this.last.symbol);
+        if (timeOffset <= 0) {
+            this.last.symbol = Date.now();
+            this.updateLatest();
+            await this.handleDailySymbol({query:{ date: new Date().toJSON() }} as unknown as Request)
+            setTimeout(
+                () => this.handeInsertSymbol(),
+                3600 * 12 * 1000
+            );
+
+            Log('inserting symbol ', formatDate(Date.now() + 3600 * 12 * 1000));
+        } else {
+            setTimeout(() => this.handeInsertSymbol(), timeOffset);
+            Log('Scraping after ', timeOffset / 1000, 's, at ', formatDate(Date.now() + timeOffset));
+        }
     }
 }
