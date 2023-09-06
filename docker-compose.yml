@@ -12,7 +12,7 @@ services:
         volumes:
             - ".:/app"
             - "/app/node_modules"
-            - "/app/backup"
+            #- "/app/backup"
             - "./oracle:/opt/oracle/instantclient_19_10/network"
         entrypoint : [ "npm","run", "start:nodemon" ]
         container_name: reddit_ts_backend_dev

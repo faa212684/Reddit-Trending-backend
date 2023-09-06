@@ -61,6 +61,7 @@ export default class ThreadController {
     @Cache(CACHE.FORUMS)
     @GET('/count/forum')
     getForums() {
+        Log('getForums')
         //{"limit":"6000","minVote":"10","minComment":"10","dateRange":"1"}
         return this.threadService.forums();
     }

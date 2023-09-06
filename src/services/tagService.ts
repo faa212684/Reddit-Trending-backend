@@ -34,9 +34,10 @@ export default class TagService {
      * @throws {Error} If there is an issue with the request to the NLTK service.
      */
     async getTag(s: string, toString = false): Promise<Tag | string> {
+        //Log(`Getting ${s}`)
         //const {[replacedWords, newSentence]} = processSentence(s);
         return axios
-            .get('http://nltk_prod:5005', { params: { string: s } }) //nltk_dev_2
+            .get('http://155.248.161.187:5005', { params: { string: s } }) //nltk_dev_2
             //.get('http://nltk_dev:5004', { params: { string: s } }) //nltk_dev_2
             .then(({ data }) => {
                 //data.noun = s; //data.noun.concat(replacedWords);

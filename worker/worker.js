@@ -6,7 +6,7 @@ const moment = require('moment');
 
 const THREADS = 'threads';
 const THREADSTAT = 'threadsStat';
-const ENDPOINT = 'https://api.rtrend.site/api';
+const ENDPOINT = 'https://api.reddittrend.com/api';
 
 function timeAdjust(date, getMS = false) {
     const duration = moment.duration(30, 'minutes');
@@ -23,7 +23,7 @@ function containsDailyAndDiscussion(str) {
 
 class Worker {
     constructor(forums, insertDBInterval = 1800, scrapeInterval = 600) {
-        //this.createFile()
+        this.createFile()
         this.token = '';
         this.forums = forums || [];
         this.insertDBInterval = insertDBInterval; // insertDBInterval in second
@@ -44,18 +44,30 @@ class Worker {
     }
 
     createFile() {
+        fs.mkdirSync('./store/backup', { recursive: true });
         fs.mkdirSync('./store/cache', { recursive: true });
         fs.mkdirSync('./store/fail', { recursive: true });
         fs.mkdirSync('./store/finish', { recursive: true });
 
-        fs.writeFile(`./store/cache/${THREADSTAT}.json`, '[]', { flag: 'wx' }, function (err) {
-            if (err) return console.log(`cache/${THREADSTAT}.json created`);
+        try{
+            fs.writeFileSync(`./store/cache/${THREADSTAT}.json`, JSON.stringify([]), { flag: 'wx' })
+        }catch(e){
+            console.log(`cache/${THREADSTAT}.json exist`);
+        } 
+        try{
+            fs.writeFileSync(`./store/cache/${THREADS}.json`, JSON.stringify([]), { flag: 'wx' })
+        }catch(e){
+            console.log(`cache/${THREADS}.json exist`);
+        } 
+
+        /* fs.writeFile(`./store/cache/${THREADSTAT}.json`, JSON.stringify([]), { flag: 'wx' }, function (err) {
+            if (!err) return console.log(`cache/${THREADSTAT}.json created`);
             console.log(`cache/${THREADSTAT}.json exist`);
         });
-        fs.writeFile(`./store/cache/${THREADS}.json`, '[]', { flag: 'wx' }, function (err) {
-            if (err) return console.log(`cache/${THREADS}.json created`);
+        fs.writeFile(`./store/cache/${THREADS}.json`, JSON.stringify([]), { flag: 'wx' }, function (err) {
+            if (!err) return console.log(`cache/${THREADS}.json created`);
             console.log(`cache/${THREADS}.json exist`);
-        });
+        }); */
     }
 
     start() {
@@ -138,10 +150,13 @@ class Worker {
 
     getLatest() {
         const last = require('./last.json');
-        if (!'scrape' in last) last.scrape = Date.now();
-        if (!'insertDB' in last) last.insertDB = Date.now();
+        if (!last.scrapet) last.scrape = Date.now();
+        if (!last.insertDB) last.insertDB = Date.now();
+        Log("last:", last)
+        
         Log('Last scrape:', this.formatDate(last.scrape), ', last DB insertion: ', this.formatDate(last.insertDB));
         this.last = last;
+        this.updateLatest()
     }
 
     formatDate(s) {
@@ -151,7 +166,7 @@ class Worker {
     }
 
     updateLatest() {
-        fs.writeFileSync('last.json', JSON.stringify(this.last));
+        fs.writeFileSync('./last.json', JSON.stringify(this.last));
     }
 
     cache() {
@@ -160,8 +175,8 @@ class Worker {
     }
 
     backup() {
-        fs.writeFileSync(`./store/backup/${this.insertTimeStamp}_${THREADSTAT}.json`, JSON.stringify(this.data.threadsStat));
-        fs.writeFileSync(`./store/backup/${this.insertTimeStamp}_${THREADS}.json`, JSON.stringify(this.data.threads));
+        fs.writeFileSync(`./store/backup/${this.insertTimeStamp.toJSON()}_${THREADSTAT}.json`, JSON.stringify(this.data.threadsStat));
+        fs.writeFileSync(`./store/backup/${this.insertTimeStamp.toJSON()}_${THREADS}.json`, JSON.stringify(this.data.threads));
     }
 
     clearCache(target) {
@@ -205,7 +220,7 @@ class Worker {
 
     saveFail(target, data) {
         //fs.appendFileSync(`./store/fail/${target}.json`, JSON.stringify(data)+",\n");
-        fs.writeFileSync(`./store/fail/${this.insertTimeStamp}_${target}.json`, JSON.stringify(data));
+        fs.writeFileSync(`./store/fail/${this.insertTimeStamp.toJSON()}_${target}.json`, JSON.stringify(data));
     }
 
     async insertFail() {

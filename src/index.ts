@@ -1,4 +1,4 @@
-import { expressMiddleware } from '@apollo/server/express4';
+
 import cors from 'cors';
 import express, { Express, Request, Response } from 'express';
 import Log from 'log4fns';
@@ -23,7 +23,7 @@ class App {
     async init() {
         //await this.graphqlServer.startServer();
         await this.initExpressServer();
-        await injectManager.get("SymbolController").handeInsertSymbol()
+        //await injectManager.get("SymbolController").handeInsertSymbol()
     }
 
     initExpressServer() {
@@ -32,8 +32,10 @@ class App {
         this.instance.use(cors());
         this.instance.use(express.json());
         this.instance.use(express.urlencoded({ extended: true }));
-        this.instance.use(function (req: Request, res: Response, next: Function) {
+     
+        this.instance.use( (req: Request, res: Response, next: Function)=>{
             Log(req.path, req.query);
+            //console.log(router.route)
             next();
         });
         this.instance.use('/api', router.route);

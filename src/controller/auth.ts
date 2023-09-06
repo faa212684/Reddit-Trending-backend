@@ -30,6 +30,7 @@ export default class AuthController {
     async getToken(req: Request) {
         const { username, password } = req.body;
         if (username !== process.env.USERNAME || password !== process.env.PASSWORD) throw 'user not match';
+        Log("Token Success")
         const token = jwt.sign({ exp: this.expireTime, data: 'foobar' }, process.env.SECRET_KEY);
         await AuthController.cache.set(token, true);
         return { token };

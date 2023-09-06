@@ -1,16 +1,19 @@
-FROM node:19-buster
+FROM node:17-buster
 WORKDIR /app
+
 
 RUN apt update && apt install -y libaio1 libaio-dev
 ADD https://download.oracle.com/otn_software/linux/instantclient/191000/instantclient-basiclite-linux.arm64-19.10.0.0.0dbru.zip /opt/oracle/instantclient.zip
 RUN unzip /opt/oracle/instantclient.zip -d /opt/oracle
 RUN echo /opt/oracle/instantclient* > /etc/ld.so.conf.d/oracle-instantclient.conf && ldconfig
-#COPY ./oracle/wallet /opt/oracle/instantclient_19_10/network/admin
-#COPY ./oracle/wallet_json /opt/oracle/instantclient_19_10/network/admin_json
+COPY ./oracle/admin /opt/oracle/instantclient_19_10/network/admin
 
-COPY package.json ./
+COPY package*.json ./
+RUN apt install libsdl-pango-dev -y
+RUN apt install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
 RUN npm install
 
 EXPOSE 3000
+
 
 CMD [ "npm","run", "start:dev" ]

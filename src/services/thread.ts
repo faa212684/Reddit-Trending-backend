@@ -5,7 +5,7 @@ import { DATABASE } from './constant';
 import Database from './database';
 import TagService from './tagService';
 import type { Tag } from './tagService';
-
+import Log from 'log4fns';
 
 export interface Thread {
     _id?: string;
@@ -96,10 +96,11 @@ export default class ThreadService {
     }
 
     async forums(): Promise<{ forum: string; count: number }[]> {
+        //Log('forums')
         return this.db.knex
-            .select('forum', this.db.knex.raw('count(??) as "count"', ['forum']))
-            .from(DATABASE.THREAD)
-            .groupBy('forum');
+        .select('forum', this.db.knex.raw('count(??) as "count"', ['forum']))
+        .from(DATABASE.THREAD)
+        .groupBy('forum');
     }
 
     /**
@@ -116,7 +117,15 @@ export default class ThreadService {
      */
     async saveThreads(threads: Thread[]) {
         const ids = [];
-        threads = await Promise.all(
+        const _threads = []
+        for (const thread of threads){
+            ids.push(thread.id);
+            thread.tags = await this.tagService.getTag(thread.title, true);
+            //if (Array.isArray(thread.tags)) thread.tags = JSON.stringify(thread.tags);
+            if (typeof thread.created == 'string') thread.created = new Date(thread.created);
+            _threads.push(thread)
+        }
+        /* threads = await Promise.all(
             threads.map(async thread => {
                 ids.push(thread.id);
                 thread.tags = await this.tagService.getTag(thread.title, true);
@@ -124,7 +133,7 @@ export default class ThreadService {
                 if (typeof thread.created == 'string') thread.created = new Date(thread.created);
                 return thread;
             })
-        );
+        ); */
         /* threads = threads.map(thread => {
             ids.push(thread.id)
             thread.tags = this.tagService.getTag(thread.title)
@@ -138,7 +147,7 @@ export default class ThreadService {
             .whereIn('id', ids)
             .then((rows: Thread[]) => {
                 const existIds = new Set(rows.map(x => x.id));
-                const threadsNotExist = threads.filter(thread => !existIds.has(thread.id));
+                const threadsNotExist = _threads.filter(thread => !existIds.has(thread.id));
                 //.map(x => ({ ...x, created: new Date(x.created) }));
                 if (threadsNotExist.length) {
                     return this.db.knex(DATABASE.THREAD).insert(threadsNotExist).returning('id');

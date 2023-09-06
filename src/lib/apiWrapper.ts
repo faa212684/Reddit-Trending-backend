@@ -7,6 +7,7 @@ import { Request, Response } from 'express';
  */
 export default function apiWrapper(controller: any) {
     return async (req: Request, res: Response) => {
+        console.log(controller.constructor.name)
         controller(req, res)
             .then((result: any) => {
                 //Log(result.length)

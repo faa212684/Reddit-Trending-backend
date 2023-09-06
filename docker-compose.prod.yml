@@ -5,7 +5,7 @@ services:
             context: .
             dockerfile: Dockerfile_prod
         ports:
-            - "127.0.0.1:3000:3000"
+            - '3000:3000'
         environment:
             NODE_ENV: "production"
             LD_LIBRARY_PATH: "/opt/oracle/instantclient_19_10"
@@ -18,7 +18,7 @@ services:
         #networks:
         #    default:
         #        ipv4_address: 172.19.0.3
-        entrypoint: [ "npm", "run", "start:prod" ]
+        entrypoint: [ "npm", "run", "start:nodemon" ]
         #restart: always
     redis:
         restart: always
@@ -37,11 +37,13 @@ services:
         container_name: nltk_prod
         command: pm2-runtime start main.py
         image: nltk:prod
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.8'
+                    memory: 6000M
 
 networks:
     default:
         name: composite_network
-        ipam:
-            driver: default
-            config:
-                - subnet: 172.19.0.0/16
+        external: true

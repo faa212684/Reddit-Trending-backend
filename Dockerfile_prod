@@ -10,6 +10,7 @@ COPY ./oracle/admin /opt/oracle/instantclient_19_10/network/admin
 
 COPY package*.json ./
 RUN apt install libsdl-pango-dev -y
+RUN apt install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
 RUN npm install
 #RUN npm i -g typescript ts-node
 COPY . ./
